@@ -1,0 +1,35 @@
+<aimGraph>
+	<global>
+		<deviceID>0</deviceID>
+		<devicememsize>2.0</devicememsize>
+	</global>
+	<testrun>
+		<configuration>
+			<memorylayout>AOS</memorylayout>
+			<graphmode>simple</graphmode>
+			<updatevariant>warpsized</updatevariant>
+			<rounds>10</rounds>
+			<updaterounds>10</updaterounds>
+      <pagesize>128</pagesize>
+			<initlaunchblocksize>32</initlaunchblocksize>
+			<insertlaunchblocksize>32</insertlaunchblocksize>
+			<deletelaunchblocksize>32</deletelaunchblocksize>
+			<deletionvariation>compaction</deletionvariation>
+			<verification>false</verification>
+			<performanceoutput>stdout</performanceoutput>
+			<memoryoverallocation>1.0</memoryoverallocation>
+			<stacksize>200000000</stacksize>
+			<queuesize>2000000</queuesize>
+		</configuration>
+		<graphs>
+			<filename>../graphs/email.graph</filename>
+			<filename>../graphs/luxembourg.osm.graph</filename>
+			<filename>../graphs/audikw1.graph</filename>
+		</graphs>
+		<batches>
+			<batchsize>10000</batchsize>
+			<batchsize>100000</batchsize>
+      <batchsize>1000000</batchsize>
+		</batches>
+	</testrun>
+</aimGraph>

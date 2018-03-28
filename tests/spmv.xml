@@ -1,0 +1,36 @@
+﻿<aimGraph>
+  <global>
+    <deviceID>1</deviceID>
+    <devicememsize>6</devicememsize>
+  </global>
+  <testrun>
+    <configuration>
+      <memorylayout>AOS</memorylayout>
+      <graphmode>matrix</graphmode>
+      <updatevariant>standard</updatevariant>
+      <rounds>1</rounds>
+      <updaterounds>5</updaterounds>
+      <pagesize>128</pagesize>
+      <initlaunchblocksize>32</initlaunchblocksize>
+      <insertlaunchblocksize>256</insertlaunchblocksize>
+      <deletelaunchblocksize>256</deletelaunchblocksize>
+      <deletionvariation>compaction</deletionvariation>
+      <verification>false</verification>
+      <performanceoutput>stdout</performanceoutput>
+      <memoryoverallocation>1.0</memoryoverallocation>
+      <stacksize>0</stacksize>
+      <queuesize>2000000</queuesize>
+    </configuration>
+    <graphs>
+      <filename>../graphs/email.graph</filename>
+      <filename>../graphs/luxembourg.osm.graph</filename>
+      <filename>../graphs/coAuthorsCiteseer.graph</filename>
+      <filename>../graphs/coAuthorsDBLP.graph</filename>
+      <filename>../graphs/delaunay_n20.graph</filename>
+      <filename>../graphs/ldoor.graph</filename>
+    </graphs>
+    <batches>
+      <batchsize>1000000</batchsize>
+    </batches>
+  </testrun>
+</aimGraph>

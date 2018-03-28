@@ -1,0 +1,36 @@
+<aimGraph>
+	<global>
+		<deviceID>0</deviceID>
+		<devicememsize>10.0</devicememsize>
+	</global>
+	<testrun>
+		<configuration>
+			<memorylayout>AOS</memorylayout>
+			<graphmode>simple</graphmode>
+			<updatevariant>vertexcentricsorted</updatevariant>
+			<rounds>10</rounds>
+			<updaterounds>10</updaterounds>
+      <pagesize>64</pagesize>
+			<initlaunchblocksize>32</initlaunchblocksize>
+			<insertlaunchblocksize>256</insertlaunchblocksize>
+			<deletelaunchblocksize>256</deletelaunchblocksize>
+			<deletionvariation>standard</deletionvariation>
+			<verification>true</verification>
+			<performanceoutput>stdout</performanceoutput>
+			<memoryoverallocation>1.0</memoryoverallocation>
+			<stacksize>400000000</stacksize>
+			<queuesize>2000000</queuesize>
+		</configuration>
+		<graphs>
+		  <filename>../../graphs/email.graph</filename>
+			<filename>../../graphs/luxembourg.osm.graph</filename>
+		</graphs>
+		<batches>
+			<batchsize>100</batchsize>
+			<batchsize>1000</batchsize>
+			<batchsize>10000</batchsize>
+			<batchsize>100000</batchsize>
+			<batchsize>1000000</batchsize>
+		</batches>
+	</testrun>
+</aimGraph>
