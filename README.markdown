@@ -1,4 +1,4 @@
-# aimGraph
+# faimGraph
 
 The following repository holds data and source code which is part of the masterproject/thesis of Martin Winter
 
