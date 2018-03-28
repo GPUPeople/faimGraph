@@ -5,17 +5,11 @@ The following repository holds data and source code which is part of the masterp
 
 ## General Information
 
-This code base represents aimGraph (Autonomous, Independent Management of Dynamic Graphs on GPUs)
+This code base represents faimGraph: High Performance Management of Fully-dynamic Graphs under tight Memory Constraints on the GPU
 
 `IMPORTANT NOTE`:
-Since this is currently in development as the on-going master thesis of Martin Winter, this represents a snapshot as of 18.09.2017 and not a completely finished project, this means
-
-- Queuing approach already implemented
-- Fully Dynamic also implemented (but not tested and validated yet)
-- Graph Directionality not fully implemented (in undirected mode, currently both edges (src-dst and dst-src) have
-  to be inserted separately, will be automatic later on)
-- Memory Layout quite different from paper, but should work in similar fashion and produce the same results
-- STC not fully done yet
+As this is still a research project, the current state is still prone to misconfiguration, hence it is possible to provide the framework with invalid or "bad" values without a warning(e.g. setting the queue size to 0, hence loosing access to all returned indices). 
+The provided configuration files should provide a guideline on how to set up the project to perform as intended, if questions do arise, it would be highly appreciated to seek contact with the authors for clarification.
 
 The framework currently can handle graphs provided in CSR format as found here:
 http://www.cc.gatech.edu/dimacs10/
@@ -23,10 +17,6 @@ http://www.cc.gatech.edu/dimacs10/
 Graphs in other formats would need to be converted to CSR format first.
 
 The framework can be configured using an xml-style configuration file (Description below).
-
-`IMPORTANT NOTE`:
-Since the memory management is maintained entirely by the framework, it is very important to choose the memory requirements (memory size, stacksize, queuesize) correctly as it is possible to overwrite graph data by incorrectly choosing the stack size for example
-
 
 ## Setup
 
@@ -39,7 +29,7 @@ Linux:
 To setup and build the project, just run setup.sh
 
 Windows:
-Use CMake to setup project and build using Visual Studio 2017
+Use CMake to setup project and build using for example Visual Studio 2017
 
 
 ## Running project
@@ -66,17 +56,14 @@ testrun
 			Sets up which graphmode is used
 				simple - weight - semantic
 		updatevariant
-			Can be currently "standard", "warpsized" or "specialised"
-				Defines how the update should occur (1 thread or 1 warp per update)
-				Warpsized approach requires a blocksize of 128 and update kernel launch size of 32
-				Standard approach should be flexible
+			Can be currently "standard", "warpsized", "vertexcentric" or "vertexcentricsorted"
+				Defines how the update should occur (1 thread or 1 warp per update) or based on affected vertices (+ respecting sort order)
 		rounds
 			Number of rounds for this testrun, the graphstructure will be initialized and torn down this much
 		updaterounds
 			Number of individual update rounds within a round, for each update round batch size of edges is inserted and removed again (can be either the same updates or "realistic" updates, this can be changed in main.cpp via parameter "realisticDeletion")
-		edgeblocksize
-			Size of edgeblocks that are given out by the memory manager in Bytes
-				For warpsized approach has to be 128
+		pagesize
+			Size of a page used for edge data
 		initlaunchblocksize
 			Kernel launch size for the Initialization (e.g. 32)
 		insertlaunchblocksize
@@ -86,10 +73,9 @@ testrun
 			Kernel launch size for the Deletion (e.g. 256)
 				For warpsized approach has to be 32
 		deletionvariation
-			Which Deletion variation should be used, can be currently "standard" or "compaction" (needed for queuing)
-				Which are available depends on the updatevariant
+			To utilize efficient memory management, "compaction" has to be enabled, only the standard update approach can still perform "standard" deletion (aka no compaction)
 		verification
-			If verification should be performed to check if graph structure on the device matches graph on host (VERY SLOW)
+			If verification should be performed to check if graph structure on the device matches graph on host (VERY SLOW - unoptimized on CPU)
 		performanceoutput
 			Currently either "csv" or "stdout", changes where the performance output is written to
 		memoryoverallocation
