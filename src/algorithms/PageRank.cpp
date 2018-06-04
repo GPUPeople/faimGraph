@@ -110,7 +110,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
     float time_elapsed_init = 0;
     float time_elapsed_pagerank_naive = 0;
     float time_elapsed_pagerank_balanced = 0;
-    int iterations = 5;
+    int iterations = 20;
 
     //Setup graph parser and read in file
     std::unique_ptr<GraphParser> parser(new GraphParser(graph));
@@ -124,20 +124,17 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
     // Initialization phase
     //------------------------------------------------------------------------------
     //
+    start_clock(ce_start, ce_stop);
+
+    std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+    aimGraph->initializeMemory(parser);
+
+    time_diff = end_clock(ce_start, ce_stop);
+    time_elapsed_init += time_diff;
+    
     for (int i = 0; i < testrun->params->rounds_; i++)
     {
       //std::cout << "Round: " << i + 1 << std::endl;
-
-      start_clock(ce_start, ce_stop);
-
-      std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-      aimGraph->initializeMemory(parser);
-
-      time_diff = end_clock(ce_start, ce_stop);
-      time_elapsed_init += time_diff;
-
-      
-
       //------------------------------------------------------------------------------
       // PageRank Naive phase
       //------------------------------------------------------------------------------

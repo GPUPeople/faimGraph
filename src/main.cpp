@@ -135,7 +135,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
   std::vector<PerformanceData> perfData;
 
   // Global Properties
-  bool realisticDeletion = true;
+  bool realisticDeletion = false;
   bool gpuVerification = true;
   bool writeToFile = false;
   bool duplicate_check = true;
@@ -154,6 +154,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
       float time_elapsed_init = 0;
       float time_elapsed_edgeinsertion = 0;
       float time_elapsed_edgedeletion = 0; 
+      int warmup_rounds = 2;
 
       //Setup graph parser and read in file
       std::unique_ptr<GraphParser> parser(new GraphParser(graph));
@@ -163,7 +164,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
         return;
       }
 
-      for (int i = 0; i < testrun->params->rounds_; i++, offset += range)
+      for (int i = 0; i < testrun->params->rounds_ + warmup_rounds; i++, offset += range)
       {
         //------------------------------------------------------------------------------
         // Initialization phase
@@ -173,15 +174,18 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
         std::cout << "Round: " << i + 1 << std::endl;
         
         std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-
+        //HANDLE_ERROR(cudaMalloc((void **)&(aimGraph->memory_manager->d_memory), static_cast<uint64_t>(GIGABYTE * config->device_mem_size_)));
         //printCUDAStats("Allocation: ");
+        
+        
 
         start_clock(ce_start, ce_stop); 
         
         aimGraph->initializeMemory(parser);
         
         time_diff = end_clock(ce_start, ce_stop);
-        time_elapsed_init += time_diff;        
+        if(i >= warmup_rounds)
+          time_elapsed_init += time_diff;        
 
         //aimGraph->memory_manager->template sortAdjacency<VertexDataType, EdgeDataType>(config, SortOrder::ASCENDING);
 
@@ -199,13 +203,13 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
         for (int j = 0; j < testrun->params->update_rounds_; j++)
         {
-          //std::cout << "Update-Round: " << j + 1 << std::endl;
+          // std::cout << "Update-Round: " << j + 1 << std::endl;
           //------------------------------------------------------------------------------
           // Edge Insertion phase
           //------------------------------------------------------------------------------
           //
-          auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j);
-          // auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, range, offset);
+          //auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j);
+          auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, range, offset);
           aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
 
           //------------------------------------------------------------------------------
@@ -217,7 +221,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           aimGraph->edgeInsertion();
           
           time_diff = end_clock(ce_start, ce_stop);
-          time_elapsed_edgeinsertion += time_diff;
+          if(i >= warmup_rounds)
+            time_elapsed_edgeinsertion += time_diff;
 
           if (testrun->params->verification_)
           {
@@ -246,8 +251,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           if(realisticDeletion)
           {
             // Generate Edge deletion updates randomly from graph data
-            realistic_edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j);
-            // realistic_edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, range, offset);
+            //realistic_edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j);
+            realistic_edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, range, offset);
             aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(realistic_edge_updates), EdgeUpdateVersion::GENERAL);
           }
           
@@ -256,7 +261,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           aimGraph->edgeDeletion();
           
           time_diff = end_clock(ce_start, ce_stop);
-          time_elapsed_edgedeletion += time_diff;
+          if(i >= warmup_rounds)
+            time_elapsed_edgedeletion += time_diff;
 
           //------------------------------------------------------------------------------
           // Verification phase

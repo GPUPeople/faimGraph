@@ -36,7 +36,7 @@ void __syncwarp();
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType, typename IndexType, typename BlockType>
-__forceinline__ __device__ EdgeDataType* pageAccess(memory_t* memory, IndexType page_index, BlockType page_size, uint64_t start_index)
+__forceinline__ __host__ __device__ EdgeDataType* pageAccess(memory_t* memory, IndexType page_index, BlockType page_size, uint64_t start_index)
 {
   return (EdgeDataType*)&memory[(start_index - page_index) * page_size];
 }

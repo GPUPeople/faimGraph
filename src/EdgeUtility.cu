@@ -207,6 +207,32 @@ __global__ void d_duplicateCheckingInSortedBatch2Graph(MemoryManager* memory_man
   return;
 }
 
+template <typename VertexDataType, typename EdgeDataType, typename UpdateDataType>
+__global__ void d_duplicateCheckingInSortedBatch2Graph_Updatebased(MemoryManager* memory_manager,
+                                                       memory_t* memory,
+                                                       int page_size,
+                                                       UpdateDataType* edge_update_data,
+                                                       int batch_size,
+                                                       index_t* update_src_offsets,
+                                                       index_t* deletion_helper)
+{
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+  if (tid >= batch_size)
+    return;
+
+  vertex_t edges_per_page = memory_manager->edges_per_page;
+  UpdateDataType edge_update = edge_update_data[tid];
+  VertexDataType* vertices = (VertexDataType*)memory;
+  VertexDataType vertex = vertices[edge_update.source];
+  AdjacencyIterator<EdgeDataType> adjacency_iterator(pageAccess<EdgeDataType>(memory, vertex.mem_index, page_size, memory_manager->start_index));
+  for(int i = 0; i < vertex.neighbours; ++i)
+  {
+    if(adjacency_iterator.getDestination() == edge_update.update.destination)
+      deletion_helper[tid] = DELETIONMARKER;
+    adjacency_iterator.advanceIterator(i, edges_per_page, memory, page_size, memory_manager->start_index);
+  }
+}
+
 //------------------------------------------------------------------------------
 // Detailed discussion at: 
 // https://bitbucket.org/gpupeople/gpustreaminggraphs/issues/9/sorted-duplicate-checking-problem
@@ -747,16 +773,34 @@ void EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>::edgeUpdate
                           sizeof(index_t) * batch_size));
 
   // Duplicate Checking in Graph (sorted updates)
-  block_size = WARPSIZE * MULTIPLICATOR;
-  grid_size = (memory_manager->next_free_vertex_index / MULTIPLICATOR) + 1;
-  d_duplicateCheckingInSortedBatch2Graph<VertexDataType, EdgeDataType, UpdateDataType> << < grid_size, block_size >> >((MemoryManager*)memory_manager->d_memory,
-                                                                                                                        memory_manager->d_data,
-                                                                                                                        memory_manager->page_size,
-                                                                                                                        updates->d_edge_update,
-                                                                                                                        batch_size,
-                                                                                                                        preprocessed->d_update_src_offsets,
-                                                                                                                        d_deletion_helper);
-  cudaDeviceSynchronize();
+  // if(((memory_manager->number_vertices > batch_size*10) && (memory_manager->number_edges / memory_manager->number_vertices < 3)) || (memory_manager->number_edges / memory_manager->number_vertices > 50))
+  // {
+  //   std::cout << "Case graph to batch\n";
+  //   block_size = WARPSIZE * MULTIPLICATOR;
+  //   grid_size = (memory_manager->next_free_vertex_index / MULTIPLICATOR) + 1;
+  //   d_duplicateCheckingInSortedBatch2Graph<VertexDataType, EdgeDataType, UpdateDataType> << < grid_size, block_size >> >((MemoryManager*)memory_manager->d_memory,
+  //                                                                                                                       memory_manager->d_data,
+  //                                                                                                                       memory_manager->page_size,
+  //                                                                                                                       updates->d_edge_update,
+  //                                                                                                                       batch_size,
+  //                                                                                                                       preprocessed->d_update_src_offsets,
+  //                                                                                                                       d_deletion_helper);
+  // }
+  // else
+  // {
+    // std::cout << "Case batch to graph\n";
+    block_size = 256;
+    grid_size = (batch_size / block_size) + 1;
+    d_duplicateCheckingInSortedBatch2Graph_Updatebased<VertexDataType, EdgeDataType, UpdateDataType> << < grid_size, block_size >> >((MemoryManager*)memory_manager->d_memory,
+                                                                                                                          memory_manager->d_data,
+                                                                                                                          memory_manager->page_size,
+                                                                                                                          updates->d_edge_update,
+                                                                                                                          batch_size,
+                                                                                                                          preprocessed->d_update_src_offsets,
+                                                                                                                          d_deletion_helper);
+  // }
+  
+
   // Duplicate Checking in Batch (sorted updates)
   block_size = 256;
   grid_size = (batch_size / block_size) + 1;
@@ -796,16 +840,29 @@ std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataTyp
 
   // Generate random start vertices
   srand(seed + 1);
-  for (unsigned int i = 0; i < batch_size; ++i)
+  // edge_update->edge_update.reserve(batch_size);
+  for (unsigned int i = 0; i < batch_size/2; ++i)
   {
-	UpdateDataType edge_update_data;
-  vertex_t intermediate = rand() % ((range && (range < memory_manager->next_free_vertex_index)) ? range : memory_manager->next_free_vertex_index);
-  vertex_t source;
-  if(offset + intermediate < memory_manager->next_free_vertex_index)
-    source = offset + intermediate;
-  else
-    source = intermediate;
-	edge_update_data.source = source;
+    UpdateDataType edge_update_data;
+    vertex_t intermediate = rand() % ((range && (range < memory_manager->next_free_vertex_index)) ? range : memory_manager->next_free_vertex_index);
+    vertex_t source;
+    if(offset + intermediate < memory_manager->next_free_vertex_index)
+      source = offset + intermediate;
+    else
+      source = intermediate;
+    edge_update_data.source = source;
+    edge_update->edge_update.push_back(edge_update_data);
+  }
+  for (unsigned int i = batch_size/2; i < batch_size; ++i)
+  {
+    UpdateDataType edge_update_data;
+    vertex_t intermediate = rand() % (memory_manager->next_free_vertex_index);
+    vertex_t source;
+    if(offset + intermediate < memory_manager->next_free_vertex_index)
+      source = offset + intermediate;
+    else
+      source = intermediate;
+    edge_update_data.source = source;
     edge_update->edge_update.push_back(edge_update_data);
   }
 
@@ -848,14 +905,6 @@ std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataTyp
   }
 #endif
   ++counter;
-
-  //for (auto const& update : edge_update->edge_update)
-  //{
-  //  if (update.source == 785)
-  //  {
-  //    std::cout << "Generated deletion update " << update.source << " | " << update.update.destination << std::endl;
-  //  }
-  //}
 
   return std::move(edge_update);
 }
@@ -963,11 +1012,6 @@ void MemoryManager::sortAdjacency(const std::shared_ptr<Config>& config, SortOrd
                                                                                 sort_order);
 
   cudaDeviceSynchronize();
-
-  // d_verifySortOrder<VertexDataType, EdgeDataType> << <grid_size, block_size >> > ((MemoryManager*)d_memory,
-  //                                                                                 d_data,
-  //                                                                                 edge_block_size,
-  //                                                                                 sort_order);
   
   return;
 }

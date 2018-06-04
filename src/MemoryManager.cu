@@ -233,7 +233,7 @@ size_t MemoryManager::numberPagesInMemory(vertex_t* d_page_count, vertex_t* d_ac
       cudaMemcpyDeviceToHost));
   }
 	
-
+  number_pages = accumulated_page_count;
   return accumulated_page_count;
 }
 

@@ -36,7 +36,7 @@ void MemoryManager::initialize(const std::shared_ptr<Config>& config)
   if (initialized)
     return;
 
-  // Allocate as much memory as possible
+  // Allocate memory
   HANDLE_ERROR(cudaMalloc((void **)&d_memory, total_memory));
 
   // Point stack pointer to end of device memory
@@ -88,7 +88,7 @@ void MemoryManager::setGraphMode(const std::shared_ptr<Config>& config)
 //
 void MemoryManager::queryErrorCode()
 {
-  if (!(error_code & static_cast<unsigned int>(ErrorCode::PAGE_QUEUE_FULL)))
+  if ((error_code & static_cast<unsigned int>(ErrorCode::PAGE_QUEUE_FULL)))
   {
     std::cout << "Page Queue is full" << std::endl;
   }
@@ -182,7 +182,7 @@ void MemoryManager::printEssentials(const std::string& text)
   std::cout << "----- Memory Manager Essentials | " << text <<" -----" << std::endl;
   std::cout << "Number Vertices: " << number_vertices << std::endl;
   std::cout << "Max Number Vertices: " << next_free_vertex_index << std::endl;
-  std::cout << "Pages Used: " << next_free_page << std::endl;
+  std::cout << "Pages Used: " << next_free_page - d_page_queue.count_ << " / " << number_pages << std::endl;
   std::cout << "PageQueue Fill-Level:   " << static_cast<int>(100 * (static_cast<float>(d_page_queue.count_) / d_page_queue.size_)) << " %" << std::endl;
   std::cout << "VertexQueue Fill-Level: " << static_cast<int>(100 * (static_cast<float>(d_vertex_queue.count_) / d_vertex_queue.size_)) << " %" << std::endl;
   std::cout << std::endl;

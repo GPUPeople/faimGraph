@@ -28,13 +28,29 @@ std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> EdgeUpdateManager<VertexDataTyp
 {
 	std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> edge_update(std::make_unique<EdgeUpdateBatch<EdgeUpdateType>>());
   // std::cout << "Generate random updates" << std::endl;
-
+  // edge_update->edge_update.reserve(batch_size);
 	// Generate random edge updates
 	srand(seed + 1);
-	for (vertex_t i = 0; i < batch_size; ++i)
+	for (vertex_t i = 0; i < batch_size/2; ++i)
 	{
     EdgeUpdateType edge_update_data;
     vertex_t intermediate = rand() % ((range && (range < number_vertices)) ? range : number_vertices);
+    vertex_t source;
+    if(offset + intermediate < number_vertices)
+      source = offset + intermediate;
+    else
+      source = intermediate;
+		edge_update_data.source = source;
+		edge_update_data.update.destination = rand() % number_vertices;
+    /*if ((edge_update_data.source == 888) )
+      std::cout << "Generated insertion update " << edge_update_data.source << " | " << edge_update_data.update.destination << std::endl;*/
+		edge_update->edge_update.push_back(edge_update_data);
+	}
+
+  for (vertex_t i = batch_size/2; i < batch_size; ++i)
+	{
+    EdgeUpdateType edge_update_data;
+    vertex_t intermediate = rand() % (number_vertices);
     vertex_t source;
     if(offset + intermediate < number_vertices)
       source = offset + intermediate;

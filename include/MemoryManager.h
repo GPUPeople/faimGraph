@@ -39,10 +39,13 @@ enum class SortOrder
   DESCENDING
 };
 
-enum class ErrorCode
+enum class ErrorCode : unsigned int
 {
   NO_ERROR = 0x00000000,
-  PAGE_QUEUE_FULL = 0x00000001
+  PAGE_QUEUE_FULL = 0x00000001,
+  VERTEX_QUEUE_FULL = 0x00000002,
+  OUT_OF_MEMORY = 0x00000004,
+  UNKNOWN_ERROR = 0xFFFFFFFF
 };
 
 //------------------------------------------------------------------------------
@@ -73,7 +76,7 @@ class MemoryManager
     int edgeblock_lock; /*!< Can be used to control access to the memory manager */
     vertex_t number_vertices; /*!< Holds the number of vertices in use */
     vertex_t number_edges;  /*!< Holds the number of edges in use */
-    vertex_t number_capacity; /*!< Holds the maximum capacity of edges */
+    vertex_t number_pages;  /*!< Holds the number of pages in use */
     vertex_t edges_per_page; /*!< How many edges can fit within a page */
 
     // Memory related
@@ -92,7 +95,7 @@ class MemoryManager
     ConfigurationParameters::PageLinkage page_linkage; /*!< Indicates if the graph structure is single or double linked */
 
     bool initialized{ false };
-    unsigned int error_code{ 0 };
+    unsigned int error_code{ static_cast<unsigned int>(ErrorCode::NO_ERROR) };
 
     //#############################################################################################################################################################################################
     // Memory Manager functionality
@@ -241,7 +244,6 @@ public:
 
 private:
   memory_t* temp_memory_location;
-  size_t stack_size;
   size_t size_; /*!< Size of memory allocated in this scope */
   MemoryManager* memory_manager_; /*!< Raw pointer to memory manager to alter free memory size */
 };
@@ -277,6 +279,43 @@ public:
     size_ -= sizeof(DataType) * size_in_items;
     memory_manager_->decreaseAvailableMemory(sizeof(DataType) * size_in_items);
     return reinterpret_cast<DataType*>(ret_val);
+  }
+
+private:
+  memory_t* temp_memory_location;
+  size_t size_; /*!< Size of memory allocated in this scope */
+  MemoryManager* memory_manager_; /*!< Raw pointer to memory manager to alter free memory size */
+};
+
+/*! \class TemporaryMemoryAccessHeap
+\brief Grant access to temporary memory in heap area
+*/
+class TemporaryMemoryAccessHeapTop : public TemporaryMemoryAccess
+{
+public:
+  TemporaryMemoryAccessHeapTop(MemoryManager* memory_manager, vertex_t memory_offset_in_Bytes = 0) :
+    temp_memory_location{ pageAccess<memory_t>(memory_manager->d_data, memory_manager->next_free_page, memory_manager->page_size, memory_manager->start_index) - memory_offset_in_Bytes },
+    memory_manager_{ memory_manager }, 
+    size_{ 0 } {}
+
+  TemporaryMemoryAccessHeapTop(MemoryManager* memory_manager, memory_t* current_position) :
+    temp_memory_location{ current_position },
+    memory_manager_{ memory_manager },
+    size_{ 0 } {}
+
+  //! Destructor automatically increases size again
+  ~TemporaryMemoryAccessHeapTop()
+  {
+    memory_manager_->increaseAvailableMemory(size_);
+  }
+
+  template <typename DataType>
+  DataType* getTemporaryMemory(size_t size_in_items)
+  {
+    temp_memory_location -= sizeof(DataType) * size_in_items;
+    size_ += sizeof(DataType) * size_in_items;
+    memory_manager_->decreaseAvailableMemory(sizeof(DataType) * size_in_items);
+    return reinterpret_cast<DataType*>(temp_memory_location);
   }
 
 private:
