@@ -1,9 +1,8 @@
 /*!/------------------------------------------------------------------------------
  * Main.cpp
  *
- * Masterproject/-thesis aimGraph
+ * faimGraph
  *
- * Authors: Martin Winter, 1130688
  *------------------------------------------------------------------------------
 */
 
@@ -19,7 +18,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "EdgeUpdate.h"
 #include "VertexUpdate.h"
 #include "ConfigurationParser.h"
@@ -48,16 +47,16 @@ template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataT
 void testrunImplementation(const std::shared_ptr<Config>& config, const std::unique_ptr<Testruns>& testrun);
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool gpuVerification, bool insertion, bool duplicate_check);
+void verification(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& faimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool gpuVerification, bool insertion, bool duplicate_check);
 
 int main(int argc, char *argv[])
 {
 	if(argc != 2)
 	{
-		std::cout << "Usage: ./mainaimGraph <configuration-file>" << std::endl;
+		std::cout << "Usage: ./mainfaimGraph <configuration-file>" << std::endl;
 		return RET_ERROR;
 	}
-  std::cout << "########## aimGraph Demo ##########" << std::endl;
+  std::cout << "########## faimGraph Demo ##########" << std::endl;
 
 	// Query device properties
 	//queryAndPrintDeviceProperties();
@@ -173,7 +172,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
         std::cout << "Round: " << i + 1 << std::endl;
         
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
         //HANDLE_ERROR(cudaMalloc((void **)&(aimGraph->memory_manager->d_memory), static_cast<uint64_t>(GIGABYTE * config->device_mem_size_)));
         //printCUDAStats("Allocation: ");
         
@@ -181,7 +180,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
         start_clock(ce_start, ce_stop); 
         
-        aimGraph->initializeMemory(parser);
+		  faimGraph->initializeMemory(parser);
         
         time_diff = end_clock(ce_start, ce_stop);
         if(i >= warmup_rounds)
@@ -194,10 +193,10 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
         if (testrun->params->verification_)
         {
-          std::unique_ptr<aimGraphCSR> verify_graph = aimGraph->verifyGraphStructure(aimGraph->memory_manager);
+          std::unique_ptr<aimGraphCSR> verify_graph = faimGraph->verifyGraphStructure(faimGraph->memory_manager);
           if(writeToFile)
           {
-            aimGraph->edge_update_manager->writeGraphsToFile(verify_graph, parser, "../tests/Verification/StartGraph.txt");
+				 faimGraph->edge_update_manager->writeGraphsToFile(verify_graph, parser, "../tests/Verification/StartGraph.txt");
           }
         }
 
@@ -209,8 +208,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           //------------------------------------------------------------------------------
           //
           //auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j);
-          auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, range, offset);
-          aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
+          auto edge_updates = faimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, range, offset);
+			 faimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
 
           //------------------------------------------------------------------------------
           // Start Timer for Edge Insertion
@@ -218,7 +217,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           //
           start_clock(ce_start, ce_stop);
           
-          aimGraph->edgeInsertion();
+			 faimGraph->edgeInsertion();
           
           time_diff = end_clock(ce_start, ce_stop);
           if(i >= warmup_rounds)
@@ -237,10 +236,10 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
               {
                 filename = "../tests/Verification/edgeupdatesinsert" + std::to_string((i * testrun->params->rounds_) + j) + ".txt";
               }
-              aimGraph->edge_update_manager->writeEdgeUpdatesToFile(edge_updates, batchsize, filename);
+				  faimGraph->edge_update_manager->writeEdgeUpdatesToFile(edge_updates, batchsize, filename);
             }
 
-            verification <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(aimGraph, aimGraph->edge_update_manager, "Verify Insertion Round", aimGraph->memory_manager, parser, testrun, i, j, gpuVerification, true, duplicate_check);
+            verification <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(faimGraph, faimGraph->edge_update_manager, "Verify Insertion Round", faimGraph->memory_manager, parser, testrun, i, j, gpuVerification, true, duplicate_check);
           }            
 
           //------------------------------------------------------------------------------
@@ -252,13 +251,13 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           {
             // Generate Edge deletion updates randomly from graph data
             //realistic_edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j);
-            realistic_edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, range, offset);
-            aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(realistic_edge_updates), EdgeUpdateVersion::GENERAL);
+            realistic_edge_updates = faimGraph->edge_update_manager->generateEdgeUpdates(faimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, range, offset);
+				faimGraph->edge_update_manager->receiveEdgeUpdates(std::move(realistic_edge_updates), EdgeUpdateVersion::GENERAL);
           }
           
           start_clock(ce_start, ce_stop);
           
-          aimGraph->edgeDeletion();
+			 faimGraph->edgeDeletion();
           
           time_diff = end_clock(ce_start, ce_stop);
           if(i >= warmup_rounds)
@@ -283,14 +282,14 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
                 {
                   filename = "../tests/Verification/edgeupdatesdelete" + std::to_string((i * testrun->params->rounds_) + j) + ".txt";
                 }
-                aimGraph->edge_update_manager->writeEdgeUpdatesToFile(realistic_edge_updates, batchsize, filename);
+					 faimGraph->edge_update_manager->writeEdgeUpdatesToFile(realistic_edge_updates, batchsize, filename);
               }
 
-              verification <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(aimGraph, aimGraph->edge_update_manager, "Verify Deletion Round", aimGraph->memory_manager, parser, testrun, i, j, gpuVerification, false, duplicate_check);
+              verification <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(faimGraph, faimGraph->edge_update_manager, "Verify Deletion Round", faimGraph->memory_manager, parser, testrun, i, j, gpuVerification, false, duplicate_check);
             }
             else
             {
-              verification <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(aimGraph, aimGraph->edge_update_manager, "Verify Deletion Round", aimGraph->memory_manager, parser, testrun, i, j, gpuVerification, false, duplicate_check);
+              verification <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(faimGraph, faimGraph->edge_update_manager, "Verify Deletion Round", faimGraph->memory_manager, parser, testrun, i, j, gpuVerification, false, duplicate_check);
             }
           }
         }
@@ -334,7 +333,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, 
+void verification(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& faimGraph,
   std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager,
                   const std::string& outputstring,
                   std::unique_ptr<MemoryManager>& memory_manager,
@@ -347,7 +346,7 @@ void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, Edg
                   bool duplicate_check)
 {
   std::cout << "############ " << outputstring << " " << (round * testrun->params->rounds_) + updateround << " ############" << std::endl;
-  std::unique_ptr<aimGraphCSR> verify_graph = aimGraph->verifyGraphStructure (memory_manager);
+  std::unique_ptr<aimGraphCSR> verify_graph = faimGraph->verifyGraphStructure (memory_manager);
   // Update host graph
   if (insertion)
   {
@@ -373,7 +372,7 @@ void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, Edg
   // Compare graph structures
   if (gpuVerification)
   {
-    if (!aimGraph->compareGraphs(parser, verify_graph, duplicate_check))
+    if (!faimGraph->compareGraphs(parser, verify_graph, duplicate_check))
     {
       std::cout << "########## Graphs are NOT the same ##########" << std::endl;
       exit(-1);

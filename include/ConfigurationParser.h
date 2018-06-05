@@ -1,15 +1,12 @@
 //------------------------------------------------------------------------------
 // ConfigurationParser.h
 //
-// Masterproject/-thesis GPU Streaming Graphs
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-
-#ifndef CONFIGURATIONPARSER_H
-#define CONFIGURATIONPARSER_H
+#pragma once
 
 #include "Utility.h"
 
@@ -149,5 +146,3 @@ public:
 
 
 void printConfigurationInformation(const std::shared_ptr<Config>& testruns);
-
-#endif

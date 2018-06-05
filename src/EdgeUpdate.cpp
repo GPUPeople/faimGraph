@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
-// EdgeUpdate.h
+// EdgeUpdate.cpp
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 #include <iostream>

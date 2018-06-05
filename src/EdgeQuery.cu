@@ -3,7 +3,6 @@
 //
 // faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -13,7 +12,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
 
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "EdgeUpdate.h"
 #include "MemoryManager.h"
 #include "ConfigurationParser.h"

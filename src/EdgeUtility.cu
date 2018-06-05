@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // EdgeUtility.cu
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -13,7 +12,7 @@
 #include <thrust/device_vector.h>
 #include <cstddef>
 
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "EdgeUpdate.h"
 #include "MemoryManager.h"
 #include "ConfigurationParser.h"
@@ -920,7 +919,7 @@ template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateMana
 //
 template <typename VertexDataType, typename EdgeDataType, typename UpdateDataType>
 template <typename VertexUpdateType>
-std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>::generateEdgeUpdatesConcurrent<VertexUpdateType>(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph,
+std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>::generateEdgeUpdatesConcurrent<VertexUpdateType>(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& faimGraph,
                                                                                                                                                                   const std::unique_ptr<MemoryManager>& memory_manager,
                                                                                                                                                                   vertex_t batch_size,
                                                                                                                                                                   unsigned int seed,
@@ -930,7 +929,7 @@ std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataTyp
   std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> edge_update (std::make_unique<EdgeUpdateBatch<UpdateDataType>>());
 
   // Get original graph
-  auto verify_graph = aimGraph->verifyGraphStructure (const_cast<std::unique_ptr<MemoryManager>&>(memory_manager));
+  auto verify_graph = faimGraph->verifyGraphStructure (const_cast<std::unique_ptr<MemoryManager>&>(memory_manager));
 
   // Generate random edge updates
   srand(seed + 1);
@@ -968,12 +967,12 @@ std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataTyp
   return std::move(edge_update);
 }
 
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeData, EdgeDataUpdate>::generateEdgeUpdatesConcurrent <VertexUpdate>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>>& aimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeight, EdgeDataWeightUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateWeight>(std::unique_ptr<aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>>& aimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateSemantic>(std::unique_ptr<aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>>& aimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeDataSOA, EdgeDataUpdate>::generateEdgeUpdatesConcurrent <VertexUpdate> (std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>>& aimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateWeight>(std::unique_ptr<aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>>& aimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateSemantic>(std::unique_ptr<aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>>& aimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
+template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeData, EdgeDataUpdate>::generateEdgeUpdatesConcurrent <VertexUpdate>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
+template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeight, EdgeDataWeightUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateWeight>(std::unique_ptr<faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
+template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateSemantic>(std::unique_ptr<faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
+template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeDataSOA, EdgeDataUpdate>::generateEdgeUpdatesConcurrent <VertexUpdate> (std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
+template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateWeight>(std::unique_ptr<faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
+template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateSemantic>(std::unique_ptr<faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
 
 //------------------------------------------------------------------------------
 //

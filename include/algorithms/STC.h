@@ -1,14 +1,12 @@
 //------------------------------------------------------------------------------
 // STC.h
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef AIMGRAPH_STC_H
-#define AIMGRAPH_STC_H
+#pragma once
 
 #include "Utility.h"
 
@@ -24,5 +22,3 @@ std::unique_ptr<int32_t> workBalancedSTC(const std::unique_ptr<MemoryManager>& m
                                           const int thread_blocks, 
                                           const int blockdim);
 
-
-#endif

@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // SpMV.cpp
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -22,7 +21,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "EdgeUpdate.h"
 #include "VertexUpdate.h"
 #include "ConfigurationParser.h"
@@ -37,10 +36,10 @@ template <typename VertexDataType, typename EdgeDataType>
 void testrunImplementationMM(const std::shared_ptr<Config>& config, const std::unique_ptr<Testruns>& testrun);
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, const std::string& outputstring, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool duplicate_check);
+void verification(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, const std::string& outputstring, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool duplicate_check);
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verificationMMMultiplication(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, const std::string& outputstring, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool duplicate_check, std::unique_ptr<SpMMManager>& spmm);
+void verificationMMMultiplication(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, const std::string& outputstring, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool duplicate_check, std::unique_ptr<SpMMManager>& spmm);
 
 
 //#define SPMM
@@ -52,7 +51,7 @@ int main(int argc, char *argv[])
     std::cout << "Usage: ./mainaimGraph <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## aimGraph Demo ##########" << std::endl;
+  std::cout << "########## faimGraph Demo ##########" << std::endl;
 
   // Query device properties
   //queryAndPrintDeviceProperties();
@@ -145,12 +144,12 @@ void testrunImplementationMV(const std::shared_ptr<Config>& config, const std::u
 
         //std::cout << "Round: " << i + 1 << std::endl;
 
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>>(config, parser));
-        std::unique_ptr<SpMVManager> spmv(std::make_unique<SpMVManager>(aimGraph->memory_manager->next_free_vertex_index, aimGraph->memory_manager->next_free_vertex_index));
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>>(config, parser));
+        std::unique_ptr<SpMVManager> spmv(std::make_unique<SpMVManager>(faimGraph->memory_manager->next_free_vertex_index, faimGraph->memory_manager->next_free_vertex_index));
 
         start_clock(ce_start, ce_stop);
 
-        aimGraph->initializeMemory(parser);
+		  faimGraph->initializeMemory(parser);
 
         time_diff = end_clock(ce_start, ce_stop);
         time_elapsed_init += time_diff;
@@ -178,7 +177,7 @@ void testrunImplementationMV(const std::shared_ptr<Config>& config, const std::u
           //
           start_clock(ce_start, ce_stop);
 
-          spmv->template transposeaim2CSR2aim<EdgeDataType>(aimGraph, config);
+          spmv->template transposeaim2CSR2aim<EdgeDataType>(faimGraph, config);
 
           time_diff = end_clock(ce_start, ce_stop);
           time_elapsed_transposeCSR += time_diff;
@@ -186,9 +185,9 @@ void testrunImplementationMV(const std::shared_ptr<Config>& config, const std::u
           if (testrun->params->verification_)
           {
             // Transpose back and check if everything is still the same
-            spmv->template transposeaim2CSR2aim<EdgeDataType>(aimGraph, config);
+            spmv->template transposeaim2CSR2aim<EdgeDataType>(faimGraph, config);
 
-            verification<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>(aimGraph, "Test Transpose ", parser, testrun, i, j, false);
+            verification<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>(faimGraph, "Test Transpose ", parser, testrun, i, j, false);
           }
 
           //------------------------------------------------------------------------------
@@ -264,12 +263,12 @@ void testrunImplementationMM(const std::shared_ptr<Config>& config, const std::u
         //
         std::cout << "Round: " << i + 1 << std::endl;
 
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>>(config, parser));
-        std::unique_ptr<SpMMManager> spmm(std::make_unique<SpMMManager>(aimGraph->memory_manager->next_free_vertex_index, aimGraph->memory_manager->next_free_vertex_index, aimGraph->memory_manager->next_free_vertex_index, aimGraph->memory_manager->next_free_vertex_index));
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>>(config, parser));
+        std::unique_ptr<SpMMManager> spmm(std::make_unique<SpMMManager>(faimGraph->memory_manager->next_free_vertex_index, faimGraph->memory_manager->next_free_vertex_index, faimGraph->memory_manager->next_free_vertex_index, faimGraph->memory_manager->next_free_vertex_index));
 
         start_clock(ce_start, ce_stop);
 
-        spmm->template initializeFaimGraphMatrix<EdgeDataType>(aimGraph, parser, config);
+        spmm->template initializeFaimGraphMatrix<EdgeDataType>(faimGraph, parser, config);
 
         time_diff = end_clock(ce_start, ce_stop);
         time_elapsed_init += time_diff;
@@ -284,7 +283,7 @@ void testrunImplementationMM(const std::shared_ptr<Config>& config, const std::u
           //
           start_clock(ce_start, ce_stop);
 
-          spmm->template spmmMultiplication<EdgeDataType>(aimGraph, config);
+          spmm->template spmmMultiplication<EdgeDataType>(faimGraph, config);
 
           time_diff = end_clock(ce_start, ce_stop);
           time_elapsed_multiplication += time_diff;
@@ -296,10 +295,10 @@ void testrunImplementationMM(const std::shared_ptr<Config>& config, const std::u
 
           if (testrun->params->verification_)
           {
-            verificationMMMultiplication<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>(aimGraph, "Test Multiplication ", parser, testrun, i, j, false, spmm, graph + ".matrix");
+            verificationMMMultiplication<VertexDataType, VertexUpdate, EdgeDataType, EdgeDataUpdate>(faimGraph, "Test Multiplication ", parser, testrun, i, j, false, spmm, graph + ".matrix");
           }
 
-          spmm->template resetResultMatrix <EdgeDataType>(aimGraph, config);
+          spmm->template resetResultMatrix <EdgeDataType>(faimGraph, config);
         }
       }
 
@@ -417,7 +416,7 @@ void testrunImplementationMM(const std::shared_ptr<Config>& config, const std::u
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph,
+void verification(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph,
                   const std::string& outputstring,
                   std::unique_ptr<GraphParser>& parser,
                   const std::unique_ptr<Testruns>& testrun,
@@ -661,7 +660,7 @@ std::unique_ptr<CSRMatrix> hostReadMatrixMultiplyFromFile(const std::string& fil
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verificationMMMultiplication(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph,
+void verificationMMMultiplication(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph,
                                   const std::string& outputstring,
                                   std::unique_ptr<GraphParser>& parser,
                                   const std::unique_ptr<Testruns>& testrun,

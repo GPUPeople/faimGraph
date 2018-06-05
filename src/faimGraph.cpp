@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
-// aimGraph.cpp
+// faimGraph.cpp
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#include "aimGraph.h"
+#include "faimGraph.h"

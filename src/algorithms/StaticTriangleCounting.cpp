@@ -1,9 +1,8 @@
  //------------------------------------------------------------------------------
 // StaticTriangleCounting.cpp
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
@@ -18,7 +17,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "ConfigurationParser.h"
 #include "CSVWriter.h"
 #include "STC.h"
@@ -36,10 +35,10 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./STCaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./STCfaimGraph <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## aimGraph Static Triangle Counting ##########" << std::endl;
+  std::cout << "########## faimGraph Static Triangle Counting ##########" << std::endl;
   ConfigurationParser config_parser(argv[1]);
   std::cout << "Parse Configuration File" << std::endl;
   auto config = config_parser.parseConfiguration();
@@ -139,13 +138,13 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
       start_clock(ce_start, ce_stop);
 
-      std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-      aimGraph->initializeMemory(parser);
+      std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+		faimGraph->initializeMemory(parser);
 
       time_diff = end_clock(ce_start, ce_stop);
       time_elapsed_init += time_diff;
 
-      aimGraph->memory_manager->template sortAdjacency<VertexDataType, EdgeDataType>(config, SortOrder::ASCENDING);
+		faimGraph->memory_manager->template sortAdjacency<VertexDataType, EdgeDataType>(config, SortOrder::ASCENDING);
       // aimGraph->memory_manager->template testUndirectedness<VertexDataType, EdgeDataType>(config);
       // aimGraph->memory_manager->template testSelfLoops<VertexDataType, EdgeDataType>(config);
       // aimGraph->memory_manager->template testDuplicates<VertexDataType, EdgeDataType>(config);
@@ -154,11 +153,11 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
       // Triangle counting phase
       //------------------------------------------------------------------------------
       //
-      std::unique_ptr<STC<VertexDataType, EdgeDataType>> stc(std::make_unique<STC<VertexDataType, EdgeDataType>>(aimGraph->memory_manager, STCVariant::WARPSIZED));
+      std::unique_ptr<STC<VertexDataType, EdgeDataType>> stc(std::make_unique<STC<VertexDataType, EdgeDataType>>(faimGraph->memory_manager, STCVariant::BALANCED));
       //stc->host_StaticTriangleCounting(parser);
       start_clock(ce_start, ce_stop);
 
-      auto triangle_count = stc->StaticTriangleCounting(aimGraph->memory_manager, false);
+      auto triangle_count = stc->StaticTriangleCounting(faimGraph->memory_manager, false);
 
       time_elapsed_trianglecounting += end_clock(ce_start, ce_stop);   
       

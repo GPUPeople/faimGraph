@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // MemoryManager.cpp
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 #include <iostream>
@@ -96,7 +95,7 @@ void MemoryManager::queryErrorCode()
 
 //------------------------------------------------------------------------------
 //
-void MemoryManager::resetAimGraph(vertex_t number_vertices, vertex_t number_edges)
+void MemoryManager::resetFaimGraph(vertex_t number_vertices, vertex_t number_edges)
 {
   next_free_page = 0;
   next_free_vertex_index = number_vertices;

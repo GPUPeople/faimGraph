@@ -1,14 +1,12 @@
 //------------------------------------------------------------------------------
 // GPUStreaming.h
 //
-// Masterproject/-thesis GPU Streaming Graphs
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef GPUSTREAMING_H
-#define GPUSTREAMING_H
+#pragma once
 
 #include "Utility.h"
 #include "EdgeUpdate.h"
@@ -22,10 +20,10 @@
 class GraphParser;
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-class aimGraph
+class faimGraph
 {
 public:
-  aimGraph(std::shared_ptr<Config> configuration, std::unique_ptr<GraphParser>& graph_parser) : 
+	faimGraph(std::shared_ptr<Config> configuration, std::unique_ptr<GraphParser>& graph_parser) :
     config{ std::move(configuration) },
     memory_manager{ std::make_unique<MemoryManager>(static_cast<uint64_t>(GIGABYTE * config->device_mem_size_), config, graph_parser) },
     edge_update_manager{ std::make_unique<EdgeUpdateManager<VertexDataType, EdgeDataType, EdgeUpdateType>>() }, 
@@ -33,9 +31,9 @@ public:
   
   // Setup
   void initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-  void initializeaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data);
-  void initializeaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset = 0);
-  void initializeaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset = 0);
+  void initializefaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data);
+  void initializefaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset = 0);
+  void initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset = 0);
 
   // Updates
   void edgeInsertion();
@@ -55,6 +53,3 @@ public:
   std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, EdgeUpdateType>> edge_update_manager;
   std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>> vertex_update_manager;
 };
-
-
-#endif

@@ -3,12 +3,10 @@
 //
 // faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef UTILITY_H
-#define UTILITY_H
+#pragma once
 
 #include "Definitions.h"
 #include "MemoryLayout.h"
@@ -1017,5 +1015,3 @@ __forceinline__ __device__ bool d_binarySearchOnPage(AdjacencyIterator<EdgeDataT
   }
   return false;
 }
-
-#endif

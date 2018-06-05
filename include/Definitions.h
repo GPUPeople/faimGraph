@@ -1,5 +1,12 @@
-#ifndef DEFINITIONS_GPUSTREAMINGGRAPHS_H
-#define DEFINITIONS_GPUSTREAMINGGRAPHS_H
+//------------------------------------------------------------------------------
+// Definitions.h
+//
+// faimGraph
+//
+//------------------------------------------------------------------------------
+//
+
+#pragma once
 
 #include <typeinfo>
 #include <memory>
@@ -112,5 +119,3 @@ const int32_t EDGEBLOCKSIZE = 64;
 //------------------------------------------------------------------------------
 //#define DEBUG_VERBOSE_OUPUT
 //#define ACCESS_METRICS
-
-#endif

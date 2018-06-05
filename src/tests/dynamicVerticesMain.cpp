@@ -1,9 +1,8 @@
 /*!/------------------------------------------------------------------------------
- * Main.cpp
+ * dynamicVerticesMain.cpp
  *
- * Masterproject/-thesis aimGraph
+ * faimGraph
  *
- * Authors: Martin Winter, 1130688
  *------------------------------------------------------------------------------
 */
 
@@ -19,7 +18,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "EdgeUpdate.h"
 #include "VertexUpdate.h"
 #include "ConfigurationParser.h"
@@ -29,13 +28,13 @@ template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataT
 void testrunImplementation(const std::shared_ptr<Config>& config, const std::unique_ptr<Testruns>& testrun);
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, const std::unique_ptr<EdgeUpdateBatch<UpdateDataType>>& edge_updates, int round, int updateround, bool gpuVerification, bool insertion, bool duplicate_check);
+void verification(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, const std::unique_ptr<EdgeUpdateBatch<UpdateDataType>>& edge_updates, int round, int updateround, bool gpuVerification, bool insertion, bool duplicate_check);
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verificationInsertion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>>& vertex_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool gpuVerification, bool duplicate_check, VertexMapper<index_t, index_t>& mapper);
+void verificationInsertion(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>>& vertex_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool gpuVerification, bool duplicate_check, VertexMapper<index_t, index_t>& mapper);
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verificationDeletion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>>& vertex_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool gpuVerification, bool duplicate_check, VertexMapper<index_t, index_t>& mapper);
+void verificationDeletion(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager, std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>>& vertex_update_manager, const std::string& outputstring, std::unique_ptr<MemoryManager>& memory_manager, std::unique_ptr<GraphParser>& parser, const std::unique_ptr<Testruns>& testrun, int round, int updateround, bool gpuVerification, bool duplicate_check, VertexMapper<index_t, index_t>& mapper);
 
 int main(int argc, char *argv[])
 {
@@ -160,14 +159,14 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
         
         start_clock(ce_start, ce_stop);        
 
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-        aimGraph->initializeMemory(parser);
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+		  faimGraph->initializeMemory(parser);
         time_diff = end_clock(ce_start, ce_stop);
         time_elapsed_init += time_diff;
 
         // memory_manager->printEssentials("Init");
         // Setup mapper and reserve some memory
-        mapper.initialMapperSetup(aimGraph->memory_manager, batchsize);
+        mapper.initialMapperSetup(faimGraph->memory_manager, batchsize);
 
         for (int j = 0; j < testrun->params->update_rounds_; j++)
         {
@@ -178,12 +177,12 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           //------------------------------------------------------------------------------
           //
 
-          aimGraph->vertex_update_manager->generateVertexInsertUpdates(batchsize, (i * testrun->params->rounds_) + j);
-          aimGraph->vertex_update_manager->setupMemory(aimGraph->memory_manager, mapper, VertexUpdateVersion::INSERTION);
+			  faimGraph->vertex_update_manager->generateVertexInsertUpdates(batchsize, (i * testrun->params->rounds_) + j);
+			  faimGraph->vertex_update_manager->setupMemory(faimGraph->memory_manager, mapper, VertexUpdateVersion::INSERTION);
 
           start_clock(ce_start, ce_stop);
 
-          aimGraph->vertexInsertion(mapper);
+			 faimGraph->vertexInsertion(mapper);
 
           time_diff = end_clock(ce_start, ce_stop);
           time_elapsed_vertex_insertion += time_diff; 
@@ -192,22 +191,22 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
           if (testrun->params->verification_)
           {
-            verificationInsertion <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(aimGraph, aimGraph->edge_update_manager, aimGraph->vertex_update_manager, "Verify Insertion Round", aimGraph->memory_manager, parser, testrun, i, j, gpuVerification, duplicate_check, mapper);
+            verificationInsertion <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(faimGraph, faimGraph->edge_update_manager, faimGraph->vertex_update_manager, "Verify Insertion Round", faimGraph->memory_manager, parser, testrun, i, j, gpuVerification, duplicate_check, mapper);
           }
 
-          aimGraph->vertex_update_manager->integrateInsertionChanges(mapper);
+			 faimGraph->vertex_update_manager->integrateInsertionChanges(mapper);
 
           //------------------------------------------------------------------------------
           // Vertex Deletion phase
           //------------------------------------------------------------------------------
           //
 
-          aimGraph->vertex_update_manager->generateVertexDeleteUpdates(mapper, batchsize, (i * testrun->params->rounds_) + j, aimGraph->memory_manager->next_free_vertex_index);
-          aimGraph->vertex_update_manager->setupMemory(aimGraph->memory_manager, mapper, VertexUpdateVersion::DELETION);
+			 faimGraph->vertex_update_manager->generateVertexDeleteUpdates(mapper, batchsize, (i * testrun->params->rounds_) + j, faimGraph->memory_manager->next_free_vertex_index);
+			 faimGraph->vertex_update_manager->setupMemory(faimGraph->memory_manager, mapper, VertexUpdateVersion::DELETION);
 
           start_clock(ce_start, ce_stop);
 
-          aimGraph->vertexDeletion(mapper);
+			 faimGraph->vertexDeletion(mapper);
 
           time_diff = end_clock(ce_start, ce_stop);
           time_elapsed_vertex_deletion += time_diff;
@@ -216,10 +215,10 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
           if (testrun->params->verification_)
           {
-            verificationDeletion <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(aimGraph, aimGraph->edge_update_manager, aimGraph->vertex_update_manager, "Verify Deletion Round", aimGraph->memory_manager, parser, testrun, i, j, gpuVerification, duplicate_check, mapper);
+            verificationDeletion <VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>(faimGraph, faimGraph->edge_update_manager, faimGraph->vertex_update_manager, "Verify Deletion Round", faimGraph->memory_manager, parser, testrun, i, j, gpuVerification, duplicate_check, mapper);
           }
 
-          aimGraph->vertex_update_manager->integrateDeletionChanges(mapper);
+			 faimGraph->vertex_update_manager->integrateDeletionChanges(mapper);
         }
 
         // if(i == testrun->params->rounds_ - 1)
@@ -256,7 +255,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph,
+void verification(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& faimGraph,
   std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager,
                   const std::string& outputstring,
                   std::unique_ptr<MemoryManager>& memory_manager,
@@ -270,7 +269,7 @@ void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, Edg
                   bool duplicate_check)
 {
   std::cout << "############ " << outputstring << " " << (round * testrun->params->rounds_) + updateround << " ############" << std::endl;
-  std::unique_ptr<aimGraphCSR> verify_graph = aimGraph->verifyGraphStructure (memory_manager);
+  std::unique_ptr<aimGraphCSR> verify_graph = faimGraph->verifyGraphStructure (memory_manager);
   // Update host graph
   if (insertion)
   {
@@ -297,7 +296,7 @@ void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, Edg
   // Compare graph structures
   if (gpuVerification)
   {
-    if (!aimGraph->compareGraphs(parser, verify_graph, memory_manager, duplicate_check))
+    if (!faimGraph->compareGraphs(parser, verify_graph, memory_manager, duplicate_check))
     {
       std::cout << "########## Graphs are NOT the same ##########" << std::endl;
       exit(-1);
@@ -312,7 +311,7 @@ void verification(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, Edg
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verificationInsertion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph, 
+void verificationInsertion(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& faimGraph,
   std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager,
   std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>>& vertex_update_manager,
   const std::string& outputstring,
@@ -326,7 +325,7 @@ void verificationInsertion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdate
   VertexMapper<index_t, index_t>& mapper)
 {
   std::cout << "############ " << outputstring << " " << (round * testrun->params->rounds_) + updateround << " ############" << std::endl;
-  std::unique_ptr<aimGraphCSR> verify_graph = aimGraph->verifyGraphStructure (memory_manager);
+  std::unique_ptr<aimGraphCSR> verify_graph = faimGraph->verifyGraphStructure (memory_manager);
   
   // Update host graph
   vertex_update_manager->hostVertexInsertion(parser, mapper);
@@ -346,7 +345,7 @@ void verificationInsertion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdate
   // Compare graph structures
   if (gpuVerification)
   {
-    if (!aimGraph->compareGraphs(parser, verify_graph, duplicate_check))
+    if (!faimGraph->compareGraphs(parser, verify_graph, duplicate_check))
     {
       std::cout << "########## Graphs are NOT the same ##########" << std::endl;
       exit(-1);
@@ -361,7 +360,7 @@ void verificationInsertion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdate
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename UpdateDataType>
-void verificationDeletion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& aimGraph,
+void verificationDeletion(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>& faimGraph,
   std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>>& edge_update_manager,
   std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>>& vertex_update_manager,
   const std::string& outputstring,
@@ -375,7 +374,7 @@ void verificationDeletion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateT
   VertexMapper<index_t, index_t>& mapper)
 {
   std::cout << "############ " << outputstring << " " << (round * testrun->params->rounds_) + updateround << " ############" << std::endl;
-  std::unique_ptr<aimGraphCSR> verify_graph = aimGraph->verifyGraphStructure (memory_manager);
+  std::unique_ptr<aimGraphCSR> verify_graph = faimGraph->verifyGraphStructure (memory_manager);
   
   // Update host graph
   vertex_update_manager->hostVertexDeletion(parser, mapper);
@@ -395,7 +394,7 @@ void verificationDeletion(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateT
   // Compare graph structures
   if (gpuVerification)
   {
-    if (!aimGraph->compareGraphs(parser, verify_graph, duplicate_check))
+    if (!faimGraph->compareGraphs(parser, verify_graph, duplicate_check))
     {
       std::cout << "########## Graphs are NOT the same ##########" << std::endl;
       exit(-1);

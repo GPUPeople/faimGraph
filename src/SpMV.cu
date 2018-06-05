@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // SpMV.cu
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 #include <memory>
@@ -288,7 +287,7 @@ void SpMVManager::deviceSpMV(std::unique_ptr<MemoryManager>& memory_manager,
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType>
-void SpMVManager::transposeaim2CSR2aim(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& aimgraph,
+void SpMVManager::transposeaim2CSR2aim(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& faimGraph,
                                        const std::shared_ptr<Config>& config)
 {
   int batch_size = matrix_rows;
@@ -297,7 +296,7 @@ void SpMVManager::transposeaim2CSR2aim(std::unique_ptr<aimGraph<VertexData, Vert
 
   // Get number of edges in memory  
   std::unique_ptr<CSRMatrixData> csr_matrix_data = std::make_unique<CSRMatrixData>();
-  TemporaryMemoryAccessHeap temp_memory_dispenser(aimgraph->memory_manager.get(), matrix_columns, sizeof(VertexData));
+  TemporaryMemoryAccessHeap temp_memory_dispenser(faimGraph->memory_manager.get(), matrix_columns, sizeof(VertexData));
   vertex_t* d_occurence_counter = temp_memory_dispenser.getTemporaryMemory<vertex_t>(matrix_columns + 1);
   csr_matrix_data->d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(matrix_columns + 1);
   csr_matrix_data->d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(matrix_columns);
@@ -308,10 +307,10 @@ void SpMVManager::transposeaim2CSR2aim(std::unique_ptr<aimGraph<VertexData, Vert
                           0,
                           sizeof(vertex_t) * (matrix_columns + 1)));
   // Count how often each vertex is referenced
-  d_occurenceCounter << < grid_size, block_size >> > ((MemoryManager*)(aimgraph->memory_manager->d_memory),
-                                                      aimgraph->memory_manager->d_data,
-                                                      aimgraph->memory_manager->page_size,
-                                                      d_occurence_counter);
+  d_occurenceCounter << < grid_size, block_size >> > ((MemoryManager*)(faimGraph->memory_manager->d_memory),
+																	  faimGraph->memory_manager->d_data,
+																	  faimGraph->memory_manager->page_size,
+																	  d_occurence_counter);
 
   thrust::device_ptr<vertex_t> th_occurence_counter(d_occurence_counter);
   thrust::device_ptr<vertex_t> th_offset(csr_matrix_data->d_offset);
@@ -333,25 +332,25 @@ void SpMVManager::transposeaim2CSR2aim(std::unique_ptr<aimGraph<VertexData, Vert
   csr_matrix_data->matrix_columns = matrix_rows;
 
   // Write transpose CSR
-  d_writeTransposeCSR << < grid_size, block_size >> > ((MemoryManager*)(aimgraph->memory_manager->d_memory),
-                                                        aimgraph->memory_manager->d_data,
-                                                        aimgraph->memory_manager->page_size,
-                                                        csr_matrix_data->d_offset,
-                                                        csr_matrix_data->d_adjacency,
-                                                        csr_matrix_data->d_matrix_values,
-                                                        d_occurence_counter);
+  d_writeTransposeCSR << < grid_size, block_size >> > ((MemoryManager*)(faimGraph->memory_manager->d_memory),
+																			faimGraph->memory_manager->d_data,
+																			faimGraph->memory_manager->page_size,
+																			csr_matrix_data->d_offset,
+																			csr_matrix_data->d_adjacency,
+																			csr_matrix_data->d_matrix_values,
+																			d_occurence_counter);
 
   // Reset aimGraph
-  aimgraph->memory_manager->resetAimGraph(csr_matrix_data->matrix_rows, csr_matrix_data->matrix_columns);
+  faimGraph->memory_manager->resetFaimGraph(csr_matrix_data->matrix_rows, csr_matrix_data->matrix_columns);
 
   // Now we have the transpose of the matrix in CSR format (offset|adjacency|matrix_values)
-  aimgraph->initializeaimGraphMatrix(csr_matrix_data);
+  faimGraph->initializefaimGraphMatrix(csr_matrix_data);
 
   return;
 }
 
-template void SpMVManager::transposeaim2CSR2aim<EdgeDataMatrix>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config);
-template void SpMVManager::transposeaim2CSR2aim<EdgeDataMatrixSOA>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config);
+template void SpMVManager::transposeaim2CSR2aim<EdgeDataMatrix>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config);
+template void SpMVManager::transposeaim2CSR2aim<EdgeDataMatrixSOA>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //

@@ -1,5 +1,12 @@
-#ifndef MEMORY_LAYOUT_H
-#define MEMORY_LAYOUT_H
+//------------------------------------------------------------------------------
+// MemoryLayout.h
+//
+// faimGraph
+//
+//------------------------------------------------------------------------------
+//
+
+#pragma once
 
 //------------------------------------------------------------------------------
 // EdgeData Variants for simple, with weight or semantic graphs AOS
@@ -185,5 +192,3 @@ public:
   AdjacencyList_t adjacency;
   MatrixList_t matrix_values;
 };
-
-#endif

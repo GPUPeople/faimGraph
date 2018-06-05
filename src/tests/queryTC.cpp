@@ -1,9 +1,8 @@
 /*!/------------------------------------------------------------------------------
-* Main.cpp
+* queryTC.cpp
 *
-* Masterproject/-thesis aimGraph
+* faimGraph
 *
-* Authors: Martin Winter, 1130688
 *------------------------------------------------------------------------------
 */
 
@@ -19,7 +18,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "EdgeUpdate.h"
 #include "VertexUpdate.h"
 #include "ConfigurationParser.h"
@@ -32,10 +31,10 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./mainaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./queryTCfaimGraph <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## aimGraph Demo ##########" << std::endl;
+  std::cout << "########## faimGraph Demo ##########" << std::endl;
 
   // Query device properties
   //queryAndPrintDeviceProperties();
@@ -148,12 +147,12 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
         //std::cout << "Round: " << i + 1 << std::endl;
 
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
         std::unique_ptr<EdgeQueryManager<VertexDataType, EdgeDataType>> query_manager(std::make_unique<EdgeQueryManager<VertexDataType, EdgeDataType>>());
 
         start_clock(ce_start, ce_stop);
 
-        aimGraph->initializeMemory(parser);
+		  faimGraph->initializeMemory(parser);
 
         time_diff = end_clock(ce_start, ce_stop);
         time_elapsed_init += time_diff;
@@ -169,7 +168,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
           //
           start_clock(ce_start, ce_stop);
 
-          query_manager->deviceQuery(aimGraph->memory_manager, config);
+          query_manager->deviceQuery(faimGraph->memory_manager, config);
 
           time_diff = end_clock(ce_start, ce_stop);
           time_elapsed_query += time_diff;

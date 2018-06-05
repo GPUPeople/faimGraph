@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
-// GraphParser.h
+// GraphParser.cpp
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 #include <fstream>
@@ -11,6 +10,10 @@
 #include <iostream>
 
 #include "GraphParser.h"
+#include "CSR.h"
+#include "COO.h"
+#include "Vector.h"
+#include "dCSR.h"
 
 //------------------------------------------------------------------------------
 bool GraphParser::parseGraph(bool generateGraph)
@@ -124,85 +127,52 @@ bool GraphParser::parseDIMACSGraph()
 //#define READ_REAL_MATRIX_VALUES
 bool GraphParser::parseMMGraph()
 {
-  // Open file and iterate over it line by line
-  std::cout << "Parse MM Graph" << std::endl;
-  std::ifstream graph_file(filename_);
-  std::string line;
-  highest_edge = 0;
-  
+	CSR<float> csr_mat;
+	std::string csr_name = filename_ + ".csr";
+	try
+	{
+		std::cout << "trying to load csr file \"" << csr_name << "\"\n";
+		csr_mat = loadCSR<float>(csr_name.c_str());
+		std::cout << "succesfully loaded: \"" << csr_name << "\"\n";
+	}
+	catch (std::exception& ex)
+	{
+		std::cout << "could not load csr file:\n\t" << ex.what() << "\n";
+		try
+		{
+			std::cout << "trying to load mtx file \"" << filename_ << "\"\n";
+			COO<float> coo_mat = loadMTX<float>(filename_.c_str());
+			convert(csr_mat, coo_mat);
+			std::cout << "succesfully loaded and converted: \"" << csr_name << "\"\n";
+		}
+		catch (std::exception& ex)
+		{
+			std::cout << ex.what() << std::endl;
+			return -1;
+		}
+		try
+		{
+			std::cout << "write csr file for future use\n";
+			storeCSR(csr_mat, csr_name.c_str());
+		}
+		catch (std::exception& ex)
+		{
+			std::cout << ex.what() << std::endl;
+		}
+	}
 
-  if (!graph_file.is_open())
-  {
-    std::cout << "File does not exist" << std::endl;
-    return false;
-  }
+	// Transfer data to graph parser
+	number_edges = csr_mat.nnz;
+	number_vertices = csr_mat.rows;
+	offset_.resize(number_vertices + 1);
+	adjacency_.resize(number_edges);
+	matrix_values_.resize(number_edges);
+	memcpy(&offset_[0], csr_mat.row_offsets.get(), sizeof(vertex_t) * (number_vertices + 1));
+	memcpy(&adjacency_[0], csr_mat.col_ids.get(), sizeof(vertex_t) * (number_edges));
+	memcpy(&matrix_values_[0], csr_mat.data.get(), sizeof(float) * (number_edges));
 
-  /* Graph starts with #vertices #edges
-  *  after that always the adjacency list of each vertex
-  */
-
-  // Overstep comments and parse #v and #e 
-  while (std::getline(graph_file, line))
-  {
-    std::istringstream istream(line);
-    if (istream >> number_vertices)
-    {
-      // found first non-comment, we got #rows #cols and #edges
-      istream >> number_edges;
-      istream >> number_edges;
-      break;
-    }
-  }
-  
-
-  vertex_t row, col;
-  float value;
-  offset_.resize(number_vertices);
-
-  // Parse adjacency list
-  while (std::getline(graph_file, line))
-  {
-    
-    auto adjacency_iter = adjacency_.begin();
-    auto matrix_iter = matrix_values_.begin();
-    std::istringstream istream(line);
-    istream >> row;
-    istream >> col;
-    istream >> value;
-    --row;
-    --col;
-    int pos;
-
-    for (int i = row; i < number_vertices; ++i)
-    {
-      if (i == row)
-        pos = offset_[row];
-      offset_[i] += 1;      
-    }
-
-    adjacency_iter += pos;
-    matrix_iter += pos;
-    /*std::cout << "Test" << std::endl;*/
-    adjacency_.insert(adjacency_iter, col);
-#ifdef READ_REAL_MATRIX_VALUES
-    matrix_values_.insert(matrix_iter, value);
-#endif
-  }
-
-
-
-  // Also include the offset for the #v+1 element (needed for a calculation later)
-  std::cout << "#v: " << number_vertices << " and #e: " << number_edges << std::endl;
-  //std::cout << "End parsing Graph!" << std::endl;
-#ifndef READ_REAL_MATRIX_VALUES
-  if (isMatrix)
-  {
-    std::cout << "Generate Matrix Values" << std::endl;
-    generateMatrixValues();
-  }
-#endif
-  getFreshGraph();
-  return true;
+	getFreshGraph();
+	return true;
 }
 
 //------------------------------------------------------------------------------

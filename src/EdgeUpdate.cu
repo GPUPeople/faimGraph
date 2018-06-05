@@ -1,13 +1,11 @@
 //------------------------------------------------------------------------------
-// EdgeUpdate.h
+// EdgeUpdate.cu
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
-// #include <thrust/device_vector.h>
-// #include <thrust/sort.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>

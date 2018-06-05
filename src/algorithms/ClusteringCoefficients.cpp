@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // ClusteringCoefficients.cpp
 //
-// aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, martin.winter@icg.tugraz.at
 //------------------------------------------------------------------------------
 //
 
@@ -19,7 +18,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "ConfigurationParser.h"
 #include "CSVWriter.h"
 #include "ClusteringCoefficients.h"
@@ -31,10 +30,10 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./STCaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./STCfaimGraph <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## aimGraph Static Triangle Counting ##########" << std::endl;
+  std::cout << "########## faimGraph Static Triangle Counting ##########" << std::endl;
   ConfigurationParser config_parser(argv[1]);
   std::cout << "Parse Configuration File" << std::endl;
   auto config = config_parser.parseConfiguration();
@@ -132,8 +131,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
       start_clock(ce_start, ce_stop);
 
-      std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-      aimGraph->initializeMemory(parser);
+      std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+		faimGraph->initializeMemory(parser);
 
       time_diff = end_clock(ce_start, ce_stop);
       time_elapsed_init += time_diff;
@@ -142,10 +141,10 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
       // Clustering Coefficient computation phase
       //------------------------------------------------------------------------------
       //
-      std::unique_ptr<ClusteringCoefficients<VertexDataType, EdgeDataType>> cc(std::make_unique<ClusteringCoefficients<VertexDataType, EdgeDataType>>(aimGraph->memory_manager, STCVariant::BALANCED));
+      std::unique_ptr<ClusteringCoefficients<VertexDataType, EdgeDataType>> cc(std::make_unique<ClusteringCoefficients<VertexDataType, EdgeDataType>>(faimGraph->memory_manager, STCVariant::BALANCED));
       start_clock(ce_start, ce_stop);
 
-      auto clustering_coefficient = cc->computeClusteringCoefficients(aimGraph->memory_manager);
+      auto clustering_coefficient = cc->computeClusteringCoefficients(faimGraph->memory_manager);
 
       time_elapsed_clustering_coefficients += end_clock(ce_start, ce_stop); 
 

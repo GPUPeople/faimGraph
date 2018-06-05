@@ -1,14 +1,12 @@
 //------------------------------------------------------------------------------
 // Queue.h
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef AIMGRAPH_QUEUE_H
-#define AIMGRAPH_QUEUE_H
+#pragma once
 
 #include <cuda_runtime_api.h>
 #include <cuda.h>
@@ -129,5 +127,3 @@ __forceinline__ __device__ int IndexQueue::dequeueAlternating(index_t& element)
   return FALSE;
 #endif
 }
-
-#endif

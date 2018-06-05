@@ -1,13 +1,12 @@
 //------------------------------------------------------------------------------
 // ClusteringCoefficients.h
 //
-// aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, martin.winter@icg.tugraz.at
 //------------------------------------------------------------------------------
 //
-#ifndef CLUSTERING_COEFFICIENTS_H
-#define CLUSTERING_COEFFICIENTS_H
+
+#pragma once
 
 #include  "StaticTriangleCounting.h"
 
@@ -36,5 +35,3 @@ public:
   std::unique_ptr<STC<VertexDataType, EdgeDataType>> stc;
   std::unique_ptr<float[]> clustering_coefficients;
 };
-
-#endif

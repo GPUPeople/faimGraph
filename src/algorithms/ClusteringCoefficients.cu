@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // ClusteringCoefficients.cu
 //
-// aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, martin.winter@icg.tugraz.at
 //------------------------------------------------------------------------------
 //
 #include <iostream>

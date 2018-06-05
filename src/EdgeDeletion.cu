@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // EdgeDeletion.cu
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -14,7 +13,7 @@
 #include <thrust/sort.h>
 
 #include "EdgeUpdate.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "MemoryManager.h"
 #include "ConfigurationParser.h"
 
@@ -726,17 +725,17 @@ template void EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDat
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::edgeDeletion()
+void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::edgeDeletion()
 {
   edge_update_manager->deviceEdgeDeletion(memory_manager, config);
 }
 
-template void aimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::edgeDeletion();
-template void aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::edgeDeletion();
-template void aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::edgeDeletion();
-template void aimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::edgeDeletion();
-template void aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::edgeDeletion();
-template void aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::edgeDeletion();
+template void faimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::edgeDeletion();
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::edgeDeletion();
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::edgeDeletion();
+template void faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::edgeDeletion();
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::edgeDeletion();
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::edgeDeletion();
 
 //------------------------------------------------------------------------------
 //

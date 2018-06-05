@@ -3,12 +3,11 @@
 //
 // faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
 #include "SpMM.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 
 
 //------------------------------------------------------------------------------
@@ -519,39 +518,39 @@ __global__ void d_SpMMMultiplicationWarpsized(MemoryManager* memory_manager,
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType>
-void SpMMManager::initializeFaimGraphMatrix(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& aimgraph, std::unique_ptr<GraphParser>& graph_parser, const std::shared_ptr<Config>& config)
+void SpMMManager::initializeFaimGraphMatrix(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& faimGraph, std::unique_ptr<GraphParser>& graph_parser, const std::shared_ptr<Config>& config)
 {
   // Setup first matrix
-  aimgraph->initializeaimGraphMatrix(graph_parser, input_A_offset);
+	faimGraph->initializefaimGraphMatrix(graph_parser, input_A_offset);
   cudaDeviceSynchronize();
 
   // Setup second matrix
-  aimgraph->initializeaimGraphMatrix(graph_parser, input_B_offset);
+  faimGraph->initializefaimGraphMatrix(graph_parser, input_B_offset);
   cudaDeviceSynchronize();
 
   // Setup output matrix
-  aimgraph->initializeaimGraphEmptyMatrix(graph_parser->getNumberOfVertices(), output_offset);
+  faimGraph->initializefaimGraphEmptyMatrix(graph_parser->getNumberOfVertices(), output_offset);
 
   cudaDeviceSynchronize();
   // Update current settings
-  updateMemoryManagerHost(aimgraph->memory_manager);
-  next_free_page_after_init = aimgraph->memory_manager->next_free_page;
+  updateMemoryManagerHost(faimGraph->memory_manager);
+  next_free_page_after_init = faimGraph->memory_manager->next_free_page;
 
   return;
 }
 
-template void SpMMManager::initializeFaimGraphMatrix<EdgeDataMatrix>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& aimgraph, std::unique_ptr<GraphParser>& graph_parser, const std::shared_ptr<Config>& config);
-template void SpMMManager::initializeFaimGraphMatrix<EdgeDataMatrixSOA>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& aimgraph, std::unique_ptr<GraphParser>& graph_parser, const std::shared_ptr<Config>& config);
+template void SpMMManager::initializeFaimGraphMatrix<EdgeDataMatrix>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& faimGraph, std::unique_ptr<GraphParser>& graph_parser, const std::shared_ptr<Config>& config);
+template void SpMMManager::initializeFaimGraphMatrix<EdgeDataMatrixSOA>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& faimGraph, std::unique_ptr<GraphParser>& graph_parser, const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType>
-void SpMMManager::spmmMultiplication(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config)
+void SpMMManager::spmmMultiplication(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config)
 {
   bool warpSized = true;
   int block_size;
   int grid_size;
-  TemporaryMemoryAccessHeap temp_memory_dispenser(aimgraph->memory_manager.get(), next_free_vertex, sizeof(VertexData));
+  TemporaryMemoryAccessHeap temp_memory_dispenser(faimGraph->memory_manager.get(), next_free_vertex, sizeof(VertexData));
   auto d_spmm_manager = temp_memory_dispenser.getTemporaryMemory<SpMMManager>(1);
   auto d_mem_requirement = temp_memory_dispenser.getTemporaryMemory<vertex_t>(output_rows + 1);
 
@@ -564,37 +563,37 @@ void SpMMManager::spmmMultiplication(std::unique_ptr<aimGraph<VertexData, Vertex
   {
     block_size = 256;
     grid_size = (input_A_rows / block_size) + 1;
-    d_SpMMMultiplication<EdgeDataType> << <grid_size, block_size >> > ((MemoryManager*)aimgraph->memory_manager->d_memory,
-                                                                        aimgraph->memory_manager->d_data,
-                                                                        aimgraph->memory_manager->page_size,
-                                                                        d_spmm_manager);
+    d_SpMMMultiplication<EdgeDataType> << <grid_size, block_size >> > ((MemoryManager*)faimGraph->memory_manager->d_memory,
+																								faimGraph->memory_manager->d_data,
+																								faimGraph->memory_manager->page_size,
+																								d_spmm_manager);
   }
   else
   {
     block_size = WARPSIZE * MULTIPLICATOR;
     grid_size = (input_A_rows / MULTIPLICATOR) + 1;
-    d_SpMMMultiplicationWarpsized<EdgeDataType> << <grid_size, block_size >> > ((MemoryManager*)aimgraph->memory_manager->d_memory,
-                                                                                aimgraph->memory_manager->d_data,
-                                                                                aimgraph->memory_manager->page_size,
-                                                                                d_spmm_manager);
+    d_SpMMMultiplicationWarpsized<EdgeDataType> << <grid_size, block_size >> > ((MemoryManager*)faimGraph->memory_manager->d_memory,
+																											faimGraph->memory_manager->d_data,
+																											faimGraph->memory_manager->page_size,
+																											d_spmm_manager);
   }
 
   
 
-  std::cout << "Edges after Multiplication: " << aimgraph->memory_manager->template numberEdgesInMemory<VertexData>(d_mem_requirement, output_offset, output_rows, true) << std::endl;
+  std::cout << "Edges after Multiplication: " << faimGraph->memory_manager->template numberEdgesInMemory<VertexData>(d_mem_requirement, output_offset, output_rows, true) << std::endl;
 
   return;
 }
 
-template void SpMMManager::spmmMultiplication<EdgeDataMatrix>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config);
-template void SpMMManager::spmmMultiplication<EdgeDataMatrixSOA>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config);
+template void SpMMManager::spmmMultiplication<EdgeDataMatrix>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config);
+template void SpMMManager::spmmMultiplication<EdgeDataMatrixSOA>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType>
-void SpMMManager::spmmMultiplication(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& input_matrix_A, 
-                                    std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& input_matrix_B, 
-                                    std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& output_matrix, 
+void SpMMManager::spmmMultiplication(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& input_matrix_A, 
+                                    std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& input_matrix_B, 
+                                    std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& output_matrix, 
                                     const std::shared_ptr<Config>& config)
 {
   bool warpSized = false;
@@ -639,37 +638,37 @@ void SpMMManager::spmmMultiplication(std::unique_ptr<aimGraph<VertexData, Vertex
   return;
 }
 
-template void SpMMManager::spmmMultiplication<EdgeDataMatrix>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& input_matrix_A, std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& input_matrix_B, std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& output_matrix, const std::shared_ptr<Config>& config);
-template void SpMMManager::spmmMultiplication<EdgeDataMatrixSOA>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& input_matrix_A, std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& input_matrix_B, std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& output_matrix, const std::shared_ptr<Config>& config);
+template void SpMMManager::spmmMultiplication<EdgeDataMatrix>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& input_matrix_A, std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& input_matrix_B, std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& output_matrix, const std::shared_ptr<Config>& config);
+template void SpMMManager::spmmMultiplication<EdgeDataMatrixSOA>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& input_matrix_A, std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& input_matrix_B, std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& output_matrix, const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType>
-void SpMMManager::resetResultMatrix(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config, bool tripleAimGraph)
+void SpMMManager::resetResultMatrix(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config, bool tripleAimGraph)
 {
   /*
   We have to reset the new page count -> simplest way to dismiss all new allocated pages
   And reset the neighbours count as well as the capacity for all vertices in the output
   */
-  updateMemoryManagerHost(aimgraph->memory_manager);
+  updateMemoryManagerHost(faimGraph->memory_manager);
 
   if (tripleAimGraph)
   {
-    aimgraph->memory_manager->next_free_page = 0;
+	  faimGraph->memory_manager->next_free_page = 0;
 
-    aimgraph->memory_manager->template resetAllocationStatus<VertexData, EdgeDataType>(config, aimgraph->memory_manager->next_free_vertex_index, 0);
+	  faimGraph->memory_manager->template resetAllocationStatus<VertexData, EdgeDataType>(config, faimGraph->memory_manager->next_free_vertex_index, 0);
   }
   else
   {
-    aimgraph->memory_manager->next_free_page = next_free_page_after_init;
+	  faimGraph->memory_manager->next_free_page = next_free_page_after_init;
 
-    aimgraph->memory_manager->template resetAllocationStatus<VertexData, EdgeDataType>(config, output_rows, output_offset);
+	  faimGraph->memory_manager->template resetAllocationStatus<VertexData, EdgeDataType>(config, output_rows, output_offset);
   }  
 
-  updateMemoryManagerDevice(aimgraph->memory_manager);
+  updateMemoryManagerDevice(faimGraph->memory_manager);
 
   return;
 }
 
-template void SpMMManager::resetResultMatrix<EdgeDataMatrix>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config, bool tripleAimGraph);
-template void SpMMManager::resetResultMatrix<EdgeDataMatrixSOA>(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config, bool tripleAimGraph);
+template void SpMMManager::resetResultMatrix<EdgeDataMatrix>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config, bool tripleAimGraph);
+template void SpMMManager::resetResultMatrix<EdgeDataMatrixSOA>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>>& faimGraph, const std::shared_ptr<Config>& config, bool tripleAimGraph);

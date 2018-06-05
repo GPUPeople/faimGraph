@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
-// aimGraph.cu
+// faimGraph.cu
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -13,7 +12,7 @@
 #include <fstream>
 #include <thrust/device_vector.h>
 
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "MemoryManager.h"
 #include "GraphParser.h"
 #include "ConfigurationParser.h"
@@ -63,7 +62,7 @@ __global__ void d_calculateMemoryRequirements(MemoryManager* memory_manager,
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType>
-__global__ void d_setupAimGraph(MemoryManager* memory_manager,
+__global__ void d_setupFaimGraph(MemoryManager* memory_manager,
                                 memory_t* memory,
                                 vertex_t* adjacency,
                                 vertex_t* offset,
@@ -139,7 +138,7 @@ __global__ void d_setupAimGraph(MemoryManager* memory_manager,
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType>
-__global__ void d_setupAimGraphMatrix(MemoryManager* memory_manager,
+__global__ void d_setupFaimGraphMatrix(MemoryManager* memory_manager,
                                       memory_t* memory,
                                       vertex_t* adjacency,
                                       matrix_t* matrix_values,
@@ -221,7 +220,7 @@ __global__ void d_setupAimGraphMatrix(MemoryManager* memory_manager,
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType>
-__global__ void d_aimGraphToCSR(MemoryManager* memory_manager,
+__global__ void d_faimGraphToCSR(MemoryManager* memory_manager,
                                     memory_t* memory,
                                     vertex_t* adjacency,
                                     vertex_t* offset,
@@ -267,7 +266,7 @@ __global__ void d_aimGraphToCSR(MemoryManager* memory_manager,
 //------------------------------------------------------------------------------
 //
 template <typename EdgeDataType>
-__global__ void d_aimGraphMatrixToCSR(MemoryManager* memory_manager,
+__global__ void d_faimGraphMatrixToCSR(MemoryManager* memory_manager,
                                       memory_t* memory,
                                       vertex_t* adjacency,
                                       matrix_t* matrix_values,
@@ -385,7 +384,7 @@ __global__ void d_CompareGraphs(vertex_t* adjacency_prover,
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser)
+void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser)
 {
   // First setup memory manager
   memory_manager->initialize(config);
@@ -416,7 +415,7 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
 	thrust::exclusive_scan(th_block_requirements, th_block_requirements + number_of_vertices, th_mem_requirements);
 
   // Setup GPU Streaming memory
-  d_setupAimGraph<VertexDataType, EdgeDataType> <<< grid_size, block_size >>> ((MemoryManager*)memory_manager->d_memory,
+  d_setupFaimGraph<VertexDataType, EdgeDataType> <<< grid_size, block_size >>> ((MemoryManager*)memory_manager->d_memory,
                                                                               memory_manager->d_data,
                                                                               csr_data->d_adjacency,
                                                                               csr_data->d_offset,
@@ -439,20 +438,20 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
   return;
 }
 
-template void aimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-template void aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-template void aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-template void aimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-template void aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
-template void aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
 
 
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data)
+void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializefaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data)
 {
   // First setup memory manager
   memory_manager->initialize(config);
@@ -478,7 +477,7 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
   thrust::exclusive_scan(th_block_requirements, th_block_requirements + csr_matrix_data->matrix_rows, th_mem_requirements);
 
   // Setup GPU Streaming memory
-  d_setupAimGraphMatrix <EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
+  d_setupFaimGraphMatrix <EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
                                                         memory_manager->d_data,
                                                         csr_matrix_data->d_adjacency,
                                                         csr_matrix_data->d_matrix_values,
@@ -501,13 +500,13 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
 
   return;
 }
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializeaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data);
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializeaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializefaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializefaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data);
 
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset)
+void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializefaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset)
 {
   // First setup memory manager
   memory_manager->initialize(config);
@@ -537,7 +536,7 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
   thrust::exclusive_scan(th_block_requirements, th_block_requirements + number_of_vertices, th_mem_requirements);
 
   // Setup GPU Streaming memory
-  d_setupAimGraphMatrix <EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
+  d_setupFaimGraphMatrix <EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
                                                                         memory_manager->d_data,
                                                                         csr_data->d_adjacency,
                                                                         csr_data->d_matrix_values,
@@ -563,13 +562,13 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
   return;
 }
 
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializeaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset);
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializeaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializefaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializefaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset);
 
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset)
+void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset)
 {
   // First setup memory manager
   memory_manager->initialize(config);
@@ -601,7 +600,7 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
   thrust::exclusive_scan(th_block_requirements, th_block_requirements + number_of_vertices, th_mem_requirements);
 
   // Setup GPU Streaming memory
-  d_setupAimGraphMatrix <EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
+  d_setupFaimGraphMatrix <EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
                                                                         memory_manager->d_data,
                                                                         csr_data->d_adjacency,
                                                                         csr_data->d_matrix_values,
@@ -629,14 +628,14 @@ void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::i
   return;
 }
 
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializeaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset);
-template void aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializeaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset);
 
 
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-std::unique_ptr<aimGraphCSR> aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::verifyGraphStructure(std::unique_ptr<MemoryManager>& memory_manager)
+std::unique_ptr<aimGraphCSR> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::verifyGraphStructure(std::unique_ptr<MemoryManager>& memory_manager)
 {
     int block_size = KERNEL_LAUNCH_BLOCK_SIZE;
     int grid_size = (memory_manager->next_free_vertex_index / block_size) + 1;
@@ -673,7 +672,7 @@ std::unique_ptr<aimGraphCSR> aimGraph<VertexDataType, VertexUpdateType, EdgeData
     
     verifyGraph->h_adjacency = (vertex_t*) malloc(sizeof(vertex_t) * number_adjacency);
 
-    d_aimGraphToCSR<VertexDataType, EdgeDataType> <<< grid_size, block_size >>> ((MemoryManager*)memory_manager->d_memory,
+    d_faimGraphToCSR<VertexDataType, EdgeDataType> <<< grid_size, block_size >>> ((MemoryManager*)memory_manager->d_memory,
                                                                                   memory_manager->d_data,
                                                                                   verifyGraph->d_adjacency,
                                                                                   verifyGraph->d_offset,
@@ -707,19 +706,19 @@ std::unique_ptr<aimGraphCSR> aimGraph<VertexDataType, VertexUpdateType, EdgeData
     return std::move(verifyGraph);
 }
 
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
-template std::unique_ptr<aimGraphCSR> aimGraph < VertexData, VertexUpdate, EdgeDataMatrix , EdgeDataUpdate > ::verifyGraphStructure(std::unique_ptr<MemoryManager>& memory_manager);
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::verifyGraphStructure(std::unique_ptr<MemoryManager>& memory_manager);
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph < VertexData, VertexUpdate, EdgeDataMatrix , EdgeDataUpdate > ::verifyGraphStructure(std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::verifyGraphStructure(std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::verifyGraphStructure (std::unique_ptr<MemoryManager>& memory_manager);
 
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-std::unique_ptr<aimGraphCSR> aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::verifyMatrixStructure(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices)
+std::unique_ptr<aimGraphCSR> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::verifyMatrixStructure(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices)
 {
   int block_size = KERNEL_LAUNCH_BLOCK_SIZE;
   int grid_size = (number_vertices / block_size) + 1;
@@ -757,7 +756,7 @@ std::unique_ptr<aimGraphCSR> aimGraph<VertexDataType, VertexUpdateType, EdgeData
   verifyGraph->h_matrix_values = (matrix_t*)malloc(sizeof(matrix_t) * number_adjacency);
   verifyGraph->d_matrix_values = static_cast<matrix_t*>(verifyGraph->d_adjacency + (sizeof(vertex_t) * number_adjacency));
 
-  d_aimGraphMatrixToCSR<EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
+  d_faimGraphMatrixToCSR<EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
                                                                                         memory_manager->d_data,
                                                                                         verifyGraph->d_adjacency,
                                                                                         verifyGraph->d_matrix_values,
@@ -799,8 +798,8 @@ std::unique_ptr<aimGraphCSR> aimGraph<VertexDataType, VertexUpdateType, EdgeData
   return std::move(verifyGraph);
 }
 
-template std::unique_ptr<aimGraphCSR> aimGraph < VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate > ::verifyMatrixStructure(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices);
-template std::unique_ptr<aimGraphCSR> aimGraph <VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::verifyMatrixStructure(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices);
+template std::unique_ptr<aimGraphCSR> faimGraph < VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate > ::verifyMatrixStructure(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices);
+template std::unique_ptr<aimGraphCSR> faimGraph <VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::verifyMatrixStructure(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices);
 
 //------------------------------------------------------------------------------
 //
@@ -829,7 +828,7 @@ bool h_CompareGraphs(vertex_t* adjacency_prover,
 
     if(offset_prover_tid != offset_verifier_tid)
     {
-      std::cout << "[Offset] Src-Vertex: " << tid << " | [Device]aimGraph: " << offset_prover_tid << " | [Host]Host-Graph: " << offset_verifier_tid << std::endl;
+      std::cout << "[Offset] Src-Vertex: " << tid << " | [Device]faimGraph: " << offset_prover_tid << " | [Host]Host-Graph: " << offset_verifier_tid << std::endl;
     }
 
     int offset;
@@ -853,14 +852,14 @@ bool h_CompareGraphs(vertex_t* adjacency_prover,
         }
         if(found_match == false)
         {
-          std::cout << "Host-Graph >= aimGraph" << std::endl;
+          std::cout << "Host-Graph >= faimGraph" << std::endl;
           std::cout << "[Adjacency] Src-Vertex: " << tid  << " and search_item: " << search_item << std::endl;
           if(tid != number_vertices - 1)
           {
             std::cout << "\n[DEVICE] Neighbours: " << offset_prover_tid - offset_prover[tid] << std::endl;
           }
           
-          std::cout << "[DEVICE]aimGraph-List:\n";          
+          std::cout << "[DEVICE]faimGraph-List:\n";          
           for (int l = 0; l < neighbours; ++l)
           {
             std::cout << adjacency_prover[offset + l] << " | ";
@@ -915,12 +914,12 @@ bool h_CompareGraphs(vertex_t* adjacency_prover,
         }
         if(found_match == false)
         {
-          std::cout << "aimGraph > Host-Graph" << std::endl;
+          std::cout << "faimGraph > Host-Graph" << std::endl;
           std::cout << "[Adjacency] Src-Vertex: " << tid  << " and search_item: " << search_item << std::endl;
           
           std::cout << "\n[DEVICE] Neighbours: " << offset_prover_tid - offset_prover[tid] << std::endl;
           
-          std::cout << "[DEVICE]aimGraph-List:\n";          
+          std::cout << "[DEVICE]faimGraph-List:\n";          
           for (int l = 0; l < neighbours; ++l)
           {
             std::cout << adjacency_prover[offset + l] << " | ";
@@ -988,7 +987,7 @@ bool h_CompareGraphs(vertex_t* adjacency_prover,
 
     if (offset_prover_tid != offset_verifier_tid)
     {
-      std::cout << "[Offset] Src-Vertex: " << tid << " | [Device]aimGraph: " << offset_prover_tid << " | [Host]Host-Graph: " << offset_verifier_tid << std::endl;
+      std::cout << "[Offset] Src-Vertex: " << tid << " | [Device]faimGraph: " << offset_prover_tid << " | [Host]Host-Graph: " << offset_verifier_tid << std::endl;
     }
 
     int offset;
@@ -1013,14 +1012,14 @@ bool h_CompareGraphs(vertex_t* adjacency_prover,
         }
         if (found_match == false)
         {
-          std::cout << "Host-Graph >= aimGraph" << std::endl;
+          std::cout << "Host-Graph >= faimGraph" << std::endl;
           std::cout << "[Adjacency] Src-Vertex: " << tid << " and search_item: " << search_item << " and search_value: " << search_value << std::endl;
           if (tid != number_vertices - 1)
           {
             std::cout << "\n[DEVICE] Neighbours: " << offset_prover_tid - offset_prover[tid] << std::endl;
           }
 
-          std::cout << "[DEVICE]aimGraph-List:\n";
+          std::cout << "[DEVICE]faimGraph-List:\n";
           for (int l = 0; l < neighbours; ++l)
           {
             std::cout << "(" <<  adjacency_prover[offset + l] << " | " << matrix_values_prover[offset + l] << ")" << " | ";
@@ -1059,12 +1058,12 @@ bool h_CompareGraphs(vertex_t* adjacency_prover,
         }
         if (found_match == false)
         {
-          std::cout << "aimGraph > Host-Graph" << std::endl;
+          std::cout << "faimGraph > Host-Graph" << std::endl;
           std::cout << "[Adjacency] Src-Vertex: " << tid << " and search_item: " << search_item << std::endl;
 
           std::cout << "\n[DEVICE] Neighbours: " << offset_prover_tid - offset_prover[tid] << std::endl;
 
-          std::cout << "[DEVICE]aimGraph-List:\n";
+          std::cout << "[DEVICE]faimGraph-List:\n";
           for (int l = 0; l < neighbours; ++l)
           {
             std::cout << "(" << adjacency_prover[offset + l] << " | " << matrix_values_prover[offset + l] << ")" << " | ";
@@ -1089,7 +1088,7 @@ bool h_CompareGraphs(vertex_t* adjacency_prover,
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-bool aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser,
+bool faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser,
                    std::unique_ptr<aimGraphCSR>& verify_graph,
                    bool duplicate_check)
 {
@@ -1102,20 +1101,20 @@ bool aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::c
     return h_CompareGraphs(prover_adjacency, verifier_adjacency, prover_offset, verifier_offset, number_of_vertices, verify_graph->number_edges, duplicate_check);
 }
 
-template bool aimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::compareGraphs(std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
 
 
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-bool aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::compareGraphs(std::unique_ptr<CSRMatrix>& csr_matrix,
+bool faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::compareGraphs(std::unique_ptr<CSRMatrix>& csr_matrix,
                                                                                             std::unique_ptr<aimGraphCSR>& verify_graph,
                                                                                             bool duplicate_check)
 {
@@ -1130,5 +1129,5 @@ bool aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::c
   return h_CompareGraphs(prover_adjacency, verifier_adjacency, prover_offset, verifier_offset, prover_matrix_values, verifier_matrix_values, number_of_vertices, verify_graph->number_edges, duplicate_check);
 }
 
-template bool aimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::compareGraphs(std::unique_ptr<CSRMatrix>& csr_matrix, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
-template bool aimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::compareGraphs(std::unique_ptr<CSRMatrix>& csr_matrix, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::compareGraphs(std::unique_ptr<CSRMatrix>& csr_matrix, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);
+template bool faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::compareGraphs(std::unique_ptr<CSRMatrix>& csr_matrix, std::unique_ptr<aimGraphCSR>& verify_graph, bool duplicate_check);

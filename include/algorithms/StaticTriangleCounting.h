@@ -1,17 +1,16 @@
 //------------------------------------------------------------------------------
 // StaticTriangleCounting.h
 //
-// Masterproject/-thesis GPU Streaming Graphs
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 //!  Triangle Counting implementations
 /*!
   Holds 4 different STC implementations that can be toggled by passing the corresponding STCVariant
 */
-#ifndef StaticTriangleCounting_H
-#define StaticTriangleCounting_H
+
+#pragma once
 
 #include "Utility.h"
 #include "MemoryManager.h"
@@ -62,8 +61,3 @@ public:
   std::unique_ptr<uint32_t[]> triangles;
   STCVariant variant;
 };
-
-
-
-
-#endif

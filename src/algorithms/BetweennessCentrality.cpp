@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // BetweennessCentrality.cpp
 //
-// aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, martin.winter@icg.tugraz.at
 //------------------------------------------------------------------------------
 //
 
@@ -19,7 +18,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "ConfigurationParser.h"
 #include "CSVWriter.h"
 #include "BetweennessCentrality.h"

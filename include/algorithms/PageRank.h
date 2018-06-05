@@ -1,13 +1,12 @@
 //------------------------------------------------------------------------------
 // PageRank.h
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
-#ifndef AIMGRAPH_PAGERANK_H
-#define AIMGRAPH_PAGERANK_H
+
+#pragma once
 
 #include "Utility.h"
 #include "MemoryManager.h"
@@ -42,6 +41,9 @@ public:
     HANDLE_ERROR(cudaMemset(d_page_rank,
       initial_value,
       sizeof(float) * number_values));
+    HANDLE_ERROR(cudaMemset(d_next_page_rank,
+                        0.0f, 
+                        sizeof(float) * number_values));
   }
 
   //! Performs PageRank computation on aimGraph, naive implementation
@@ -63,5 +65,3 @@ public:
   float dampening_factor{ 0.85f };
   PageRankVariant variant{ PageRankVariant::NAIVE };
 };
-
-#endif

@@ -1,14 +1,12 @@
 //------------------------------------------------------------------------------
 // CSVWriter.h
 //
-// Masterproject/-thesis GPU Streaming Graphs
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef CSVWRITER_H
-#define CSVWRITER_H
+#pragma once
 
 #include <fstream>
 
@@ -65,5 +63,3 @@ public:
   float insert_time;
   float delete_time;
 };
-
-#endif

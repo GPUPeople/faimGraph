@@ -1,14 +1,12 @@
 //------------------------------------------------------------------------------
 // GraphParser.h
 //
-// Masterproject/-thesis GPU Streaming Graphs
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef GRAPHPARSER_H
-#define GRAPHPARSER_H
+#pragma once
 
 #include <string>
 #include <memory>
@@ -68,5 +66,3 @@ class GraphParser
 
     std::vector<index_t> index_queue;
 };
-
-#endif

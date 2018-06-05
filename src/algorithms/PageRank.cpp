@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
-// PageRank.cu
+// PageRank.cpp
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -18,7 +17,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "ConfigurationParser.h"
 #include "CSVWriter.h"
 #include "PageRank.h"
@@ -30,10 +29,10 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./PageRankaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./PageRankfaimGraph <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## aimGraph PageRank ##########" << std::endl;
+  std::cout << "########## faimGraph PageRank ##########" << std::endl;
   ConfigurationParser config_parser(argv[1]);
   std::cout << "Parse Configuration File" << std::endl;
   auto config = config_parser.parseConfiguration();
@@ -126,8 +125,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
     //
     start_clock(ce_start, ce_stop);
 
-    std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-    aimGraph->initializeMemory(parser);
+    std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+	 faimGraph->initializeMemory(parser);
 
     time_diff = end_clock(ce_start, ce_stop);
     time_elapsed_init += time_diff;
@@ -139,15 +138,15 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
       // PageRank Naive phase
       //------------------------------------------------------------------------------
       //
-      std::unique_ptr<PageRank<VertexDataType, EdgeDataType>> pr(std::make_unique<PageRank<VertexDataType, EdgeDataType>>(aimGraph->memory_manager, PageRankVariant::NAIVE));
+      std::unique_ptr<PageRank<VertexDataType, EdgeDataType>> pr(std::make_unique<PageRank<VertexDataType, EdgeDataType>>(faimGraph->memory_manager, PageRankVariant::NAIVE));
 
       start_clock(ce_start, ce_stop);
 
       // Set up initial page rank, according to Wikipedia this is set to 0.25
-      pr->initializePageRankVector(0.25f, aimGraph->memory_manager->next_free_vertex_index);
+      pr->initializePageRankVector(0.25f, faimGraph->memory_manager->next_free_vertex_index);
 
       for(int i = 0; i < iterations; ++i)
-        auto rank_naive = pr->algPageRankNaive(aimGraph->memory_manager);
+        auto rank_naive = pr->algPageRankNaive(faimGraph->memory_manager);
 
       time_elapsed_pagerank_naive += end_clock(ce_start, ce_stop);
 
@@ -156,14 +155,14 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
       //------------------------------------------------------------------------------
       //
 
-      pr = std::make_unique<PageRank<VertexDataType, EdgeDataType>>(aimGraph->memory_manager, PageRankVariant::BALANCED);
+      pr = std::make_unique<PageRank<VertexDataType, EdgeDataType>>(faimGraph->memory_manager, PageRankVariant::BALANCED);
 
       start_clock(ce_start, ce_stop);
       // Set up initial page rank, according to Wikipedia this is set to 0.25
-      pr->initializePageRankVector(0.25f, aimGraph->memory_manager->next_free_vertex_index);
+      pr->initializePageRankVector(0.25f, faimGraph->memory_manager->next_free_vertex_index);
       
       for(int i = 0; i < iterations; ++i)
-        auto rank_balanced = pr->algPageRankBalanced(aimGraph->memory_manager);
+        auto rank_balanced = pr->algPageRankBalanced(faimGraph->memory_manager);
 
       time_elapsed_pagerank_balanced += end_clock(ce_start, ce_stop);
     }

@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // EdgeInsertion.cu
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -15,7 +14,7 @@
 #include <cstddef>
 
 #include "EdgeUpdate.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "MemoryManager.h"
 #include "ConfigurationParser.h"
 
@@ -797,17 +796,17 @@ template void EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDat
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-void aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::edgeInsertion()
+void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::edgeInsertion()
 {
   edge_update_manager->deviceEdgeInsertion(memory_manager, config);
 }
 
-template void aimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::edgeInsertion();
-template void aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::edgeInsertion();
-template void aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::edgeInsertion();
-template void aimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::edgeInsertion();
-template void aimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::edgeInsertion();
-template void aimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::edgeInsertion();
+template void faimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::edgeInsertion();
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::edgeInsertion();
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::edgeInsertion();
+template void faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::edgeInsertion();
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::edgeInsertion();
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::edgeInsertion();
 
 //------------------------------------------------------------------------------
 //

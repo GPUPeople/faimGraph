@@ -1,13 +1,12 @@
 //------------------------------------------------------------------------------
 // VertexMapper.h
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
-#ifndef AIMGRAPH_VERTEXMAPPER_H
-#define AIMGRAPH_VERTEXMAPPER_H
+
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -59,6 +58,3 @@ public:
   //------------------------------------------------------------------------------
   index_t mapping_size{0}; /*!< Holds the size of the mapping arrays */
 };
-
-
-#endif

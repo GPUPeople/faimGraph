@@ -1,14 +1,12 @@
 //------------------------------------------------------------------------------
 // EdgeUpdate.h
 //
-// Masterproject/-thesis GPU Streaming Graphs
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef EDGEUPDATE_H
-#define EDGEUPDATE_H
+#pragma once
 
 #include "Utility.h"
 #include "MemoryManager.h"
@@ -26,7 +24,7 @@ enum class QueryKernelConfig
 // Forward declaration
 class GraphParser;
 class Config;
-template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType> class aimGraph;
+template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType> class faimGraph;
 
 template <typename EdgeDataType>
 class EdgeBlock
@@ -108,7 +106,7 @@ public:
   std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> generateEdgeUpdates(vertex_t number_vertices, vertex_t batch_size, unsigned int seed, unsigned int range = 0, unsigned int offset = 0);
   std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> generateEdgeUpdates(const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range = 0, unsigned int offset = 0);
   template <typename VertexUpdateType>
-  std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> generateEdgeUpdatesConcurrent(std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>>& aimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range = 0, unsigned int offset = 0);
+  std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> generateEdgeUpdatesConcurrent(std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range = 0, unsigned int offset = 0);
 
   void receiveEdgeUpdates(std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> updates, EdgeUpdateVersion type);
   void hostCudaAllocConcurrentUpdates();
@@ -159,5 +157,3 @@ private:
   bool* d_query_results;
   QueryKernelConfig config{ QueryKernelConfig::VERTEXCENTRIC };
 };
-
-#endif

@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // MemoryManager.cu
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -13,7 +12,7 @@
 #include <fstream>
 #include <thrust/device_vector.h>
 
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "MemoryManager.h"
 #include "GraphParser.h"
 #include "ConfigurationParser.h"

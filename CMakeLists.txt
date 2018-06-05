@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project(aimgraph)
+project(faimgraph)
 
 if (UNIX)
 set(CUDA_HOST_COMPILER /usr/bin/gcc-6)
@@ -74,7 +74,10 @@ if (CUDA_BUILD_DEBUG)
 	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS};-G")
 endif ()
 
-cuda_add_library(aimgraph
+cuda_add_library(faimgraph
+					src/COO.cpp
+					src/CSR.cpp
+					src/dCSR.cpp
           			src/ConfigurationParser.cpp
 					src/CSVWriter.cpp
 					src/MemoryManager.cpp
@@ -82,8 +85,8 @@ cuda_add_library(aimgraph
 					src/GraphParser.cpp
 					src/Utility.cpp
 					src/Utility.cu
-					src/aimGraph.cpp
-					src/aimGraph.cu
+					src/faimGraph.cpp
+					src/faimGraph.cu
 					src/EdgeUpdate.cpp
 					src/EdgeUpdate.cu
 					src/EdgeQuery.cu
@@ -104,11 +107,11 @@ cuda_add_library(aimgraph
 					src/algorithms/ConnectedComponents.cu
         )
 
-cuda_add_executable(mainaimGraph 
+cuda_add_executable(mainfaimGraph 
           src/main.cpp
            )
 
-cuda_add_executable(STCaimGraph 
+cuda_add_executable(STCfaimGraph 
           src/algorithms/StaticTriangleCounting.cpp
            )
 
@@ -124,11 +127,11 @@ cuda_add_executable(BetweennessCentrality
           src/algorithms/BetweennessCentrality.cpp
            )
 
-cuda_add_executable(PageRankaimGraph 
+cuda_add_executable(PageRankfaimGraph 
           src/algorithms/PageRank.cpp
            )
 
-cuda_add_executable(continuousTCaimGraph 
+cuda_add_executable(continuousTCfaimGraph 
           src/tests/ContinuousTC.cpp
            )
 
@@ -136,27 +139,27 @@ cuda_add_executable(dynamicVerticesMain
           src/tests/dynamicVerticesMain.cpp
            )
 
-cuda_add_executable(concurrentTCaimGraph 
+cuda_add_executable(concurrentTCfaimGraph 
           src/tests/concurrentTC.cpp
            )
 
-cuda_add_executable(queryTCaimGraph 
+cuda_add_executable(queryTCfaimGraph 
           src/tests/queryTC.cpp
            )
 
-cuda_add_executable(spmvaimGraph 
+cuda_add_executable(spmvfaimGraph 
           src/tests/SpMV.cpp
            )
 
 
-TARGET_LINK_LIBRARIES(mainaimGraph aimgraph ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(STCaimGraph aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(ClusteringCoefficients aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(ConnectedComponents aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(BetweennessCentrality aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(PageRankaimGraph aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(continuousTCaimGraph aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(dynamicVerticesMain aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(concurrentTCaimGraph aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(queryTCaimGraph aimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(spmvaimGraph aimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(mainfaimGraph faimgraph ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(STCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(ClusteringCoefficients faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(ConnectedComponents faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(BetweennessCentrality faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(PageRankfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(continuousTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(dynamicVerticesMain faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(concurrentTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(queryTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(spmvfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})

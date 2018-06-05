@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // MemoryManager.h
 //
-// Masterproject/-thesis GPU Streaming Graphs
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 //!  Device Memory Manager 
@@ -11,8 +10,7 @@
   Holds the necessary classes for memory management on the device
 */
 
-#ifndef MEMORYMANAGER_H
-#define MEMORYMANAGER_H
+#pragma once
 
 #include "Utility.h"
 #include "ConfigurationParser.h"
@@ -121,7 +119,7 @@ class MemoryManager
     void setGraphMode(const std::shared_ptr<Config>& config);
 
     //! Reset aimGraph
-    void resetAimGraph(vertex_t number_vertices, vertex_t number_edges);
+    void resetFaimGraph(vertex_t number_vertices, vertex_t number_edges);
 
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // General use
@@ -454,5 +452,3 @@ class aimGraphCSR
     // Used to deal with temporary memory management count
     ScopedMemoryAccessHelper scoped_mem_access_counter;
 };
-
-#endif

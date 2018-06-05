@@ -1,19 +1,18 @@
 //------------------------------------------------------------------------------
 // SpMV.h
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
-#ifndef SPMV_AIMGRAPH_H
-#define SPMV_AIMGRAPH_H
+
+#pragma once
 
 #include <memory>
 
 #include "Utility.h"
 #include "MemoryManager.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 
 
 
@@ -30,7 +29,7 @@ public:
   void receiveInputVector(std::unique_ptr<matrix_t[]> input) { input_vector = std::move(input); };
   void deviceSpMV(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
   template <typename EdgeDataType> 
-  void transposeaim2CSR2aim(std::unique_ptr<aimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& aimgraph, const std::shared_ptr<Config>& config);
+  void transposeaim2CSR2aim(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataType, EdgeDataUpdate>>& faimgraph, const std::shared_ptr<Config>& config);
   void transpose(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
 
 private:
@@ -41,5 +40,3 @@ private:
   matrix_t* d_input_vector;
   matrix_t* d_result_vector;
 };
-
-#endif

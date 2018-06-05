@@ -1,14 +1,12 @@
 //------------------------------------------------------------------------------
 // VertexUpdate.h
 //
-// Masterthesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
-#ifndef AIMGRAPH_VERTEX_UPDATE_H
-#define AIMGRAPH_VERTEX_UPDATE_H
+#pragma once
 
 #include "VertexMapper.h"
 
@@ -84,9 +82,3 @@ private:
   std::unique_ptr<VertexUpdateBatch<VertexUpdateType>> vertex_insertion_updates;
   std::unique_ptr<VertexUpdateBatch<VertexUpdate>> vertex_deletion_updates;  
 };
-
-//------------------------------------------------------------------------------
-//
-
-
-#endif

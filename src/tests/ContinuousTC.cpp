@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // ContinuousTC.cpp
 //
-// Masterproject/-thesis aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, 1130688
 //------------------------------------------------------------------------------
 //
 
@@ -19,7 +18,7 @@
 //
 #include "MemoryManager.h"
 #include "GraphParser.h"
-#include "aimGraph.h"
+#include "faimGraph.h"
 #include "EdgeUpdate.h"
 #include "ConfigurationParser.h"
 #include "CSVWriter.h"
@@ -40,10 +39,10 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./mainaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./mainfaimGraph <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## aimGraph Demo ##########" << std::endl;
+  std::cout << "########## faimGraph Demo ##########" << std::endl;
 
   // Query device properties
   //queryAndPrintDeviceProperties();
@@ -325,8 +324,8 @@ void testrunImplementationSweep(const std::shared_ptr<Config>& config, const std
 
         start_clock(ce_start, ce_stop);
 
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-        aimGraph->initializeMemory(parser);
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+		  faimGraph->initializeMemory(parser);
 
         time_diff = end_clock(ce_start, ce_stop);
         time_elapsed_init += time_diff;
@@ -334,16 +333,16 @@ void testrunImplementationSweep(const std::shared_ptr<Config>& config, const std
         //range = aimGraph->memory_manager->next_free_vertex_index / (testrun->params->update_rounds_ + 10);
         range = 100;
         std::cout << "Range is: " << range << std::endl;
-        std::cout << "Highest Page is: " << aimGraph->memory_manager->start_index << std::endl;
-        TemporaryMemoryAccessStack temp_memory_dispenser(aimGraph->memory_manager.get(), aimGraph->memory_manager->d_stack_pointer);
-        vertex_t* d_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(aimGraph->memory_manager->next_free_vertex_index + 1);
-        vertex_t* d_accumulated_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(aimGraph->memory_manager->next_free_vertex_index + 1);
-        auto pages_in_memory = aimGraph->memory_manager->template numberPagesInMemory<VertexDataType>(d_pages_in_memory, d_accumulated_pages_in_memory);
+        std::cout << "Highest Page is: " << faimGraph->memory_manager->start_index << std::endl;
+        TemporaryMemoryAccessStack temp_memory_dispenser(faimGraph->memory_manager.get(), faimGraph->memory_manager->d_stack_pointer);
+        vertex_t* d_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(faimGraph->memory_manager->next_free_vertex_index + 1);
+        vertex_t* d_accumulated_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(faimGraph->memory_manager->next_free_vertex_index + 1);
+        auto pages_in_memory = faimGraph->memory_manager->template numberPagesInMemory<VertexDataType>(d_pages_in_memory, d_accumulated_pages_in_memory);
 
         /*csv_writer.writePageAllocationHeader(aimGraph->config, aimGraph->memory_manager->next_free_vertex_index);*/
 
 
-        for (int j = 0; j < aimGraph->memory_manager->next_free_vertex_index / range && pages_in_memory < aimGraph->memory_manager->start_index; j++, offset += range)
+        for (int j = 0; j < faimGraph->memory_manager->next_free_vertex_index / range && pages_in_memory < faimGraph->memory_manager->start_index; j++, offset += range)
         {
           /*std::vector<vertex_t> pages_in_memory(aimGraph->memory_manager->next_free_vertex_index);
           HANDLE_ERROR(cudaMemcpy(pages_in_memory.data(),
@@ -359,12 +358,12 @@ void testrunImplementationSweep(const std::shared_ptr<Config>& config, const std
           // Edge Insertion phase
           //------------------------------------------------------------------------------
           //
-          auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, range, offset);
-          aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
+          auto edge_updates = faimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, range, offset);
+			 faimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
 
           start_clock(ce_start, ce_stop);
 
-          aimGraph->edgeInsertion();
+			 faimGraph->edgeInsertion();
 
           time_diff = end_clock(ce_start, ce_stop);
           time_elapsed_edgeinsertion += time_diff;
@@ -377,20 +376,20 @@ void testrunImplementationSweep(const std::shared_ptr<Config>& config, const std
           if (realisticDeletion)
           {
             // Generate Edge deletion updates randomly from graph data
-            realistic_edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, 0, 0);
-            aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(realistic_edge_updates), EdgeUpdateVersion::GENERAL);
+            realistic_edge_updates = faimGraph->edge_update_manager->generateEdgeUpdates(faimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, 0, 0);
+				faimGraph->edge_update_manager->receiveEdgeUpdates(std::move(realistic_edge_updates), EdgeUpdateVersion::GENERAL);
           }
 
           // Get stats
-          pages_in_memory = aimGraph->memory_manager->template numberPagesInMemory<VertexDataType>(d_pages_in_memory, d_accumulated_pages_in_memory);
-          double vertex_mem_used = static_cast<double>(aimGraph->memory_manager->next_free_vertex_index * sizeof(VertexDataType)) / (MEGABYTE);
-          double page_mem_used = (static_cast<double>(pages_in_memory * aimGraph->memory_manager->page_size) / (MEGABYTE));
-          std::cout << "Total Memory used: " << vertex_mem_used + page_mem_used << " and pages available: " << aimGraph->memory_manager->start_index - pages_in_memory <<std::endl;
+          pages_in_memory = faimGraph->memory_manager->template numberPagesInMemory<VertexDataType>(d_pages_in_memory, d_accumulated_pages_in_memory);
+          double vertex_mem_used = static_cast<double>(faimGraph->memory_manager->next_free_vertex_index * sizeof(VertexDataType)) / (MEGABYTE);
+          double page_mem_used = (static_cast<double>(pages_in_memory * faimGraph->memory_manager->page_size) / (MEGABYTE));
+          std::cout << "Total Memory used: " << vertex_mem_used + page_mem_used << " and pages available: " << faimGraph->memory_manager->start_index - pages_in_memory <<std::endl;
           std::cout << "#################################################################################" << std::endl;
 
           start_clock(ce_start, ce_stop);
           
-          aimGraph->edgeDeletion();
+			 faimGraph->edgeDeletion();
 
           time_diff = end_clock(ce_start, ce_stop);
           time_elapsed_edgedeletion += time_diff;
@@ -449,8 +448,8 @@ void testrunImplementationRandom(const std::shared_ptr<Config>& config, const st
         std::cout << "Round: " << i + 1 << std::endl;
 
 
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
-        aimGraph->initializeMemory(parser);
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+		  faimGraph->initializeMemory(parser);
 
         /*csv_writer.writePageAllocationHeader(aimGraph->config, aimGraph->memory_manager->next_free_vertex_index);*/
 
@@ -472,25 +471,25 @@ void testrunImplementationRandom(const std::shared_ptr<Config>& config, const st
           {
             // Insertion
             //std::cout << "Insertion" << std::endl;
-            auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, 0, 0);
-            aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
-            aimGraph->edgeInsertion ();
+            auto edge_updates = faimGraph->edge_update_manager->generateEdgeUpdates(parser->getNumberOfVertices(), batchsize, (i * testrun->params->rounds_) + j, 0, 0);
+				faimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
+				faimGraph->edgeInsertion ();
           }
           else
           {
             // Deletion
             //std::cout << "Deletion" << std::endl;
-            auto edge_updates = aimGraph->edge_update_manager->generateEdgeUpdates(aimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, 0, 0);
-            aimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
-            aimGraph->edgeDeletion();
+            auto edge_updates = faimGraph->edge_update_manager->generateEdgeUpdates(faimGraph->memory_manager, batchsize, (i * testrun->params->rounds_) + j, 0, 0);
+				faimGraph->edge_update_manager->receiveEdgeUpdates(std::move(edge_updates), EdgeUpdateVersion::GENERAL);
+				faimGraph->edgeDeletion();
           }
         }
-        TemporaryMemoryAccessHeap temp_memory_dispenser(aimGraph->memory_manager.get(), aimGraph->memory_manager->next_free_vertex_index, sizeof(VertexDataType));
-        vertex_t* d_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(aimGraph->memory_manager->next_free_vertex_index + 1);
-        vertex_t* d_accumulated_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(aimGraph->memory_manager->next_free_vertex_index + 1);
-        auto pages_in_memory = aimGraph->memory_manager->template numberPagesInMemory<VertexDataType>(d_pages_in_memory, d_accumulated_pages_in_memory);
-        double vertex_mem_used = static_cast<double>(aimGraph->memory_manager->next_free_vertex_index * sizeof(VertexDataType)) / (MEGABYTE);
-        double page_mem_used = (static_cast<double>(pages_in_memory * aimGraph->memory_manager->page_size) / (MEGABYTE));
+        TemporaryMemoryAccessHeap temp_memory_dispenser(faimGraph->memory_manager.get(), faimGraph->memory_manager->next_free_vertex_index, sizeof(VertexDataType));
+        vertex_t* d_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(faimGraph->memory_manager->next_free_vertex_index + 1);
+        vertex_t* d_accumulated_pages_in_memory = temp_memory_dispenser.getTemporaryMemory<vertex_t>(faimGraph->memory_manager->next_free_vertex_index + 1);
+        auto pages_in_memory = faimGraph->memory_manager->template numberPagesInMemory<VertexDataType>(d_pages_in_memory, d_accumulated_pages_in_memory);
+        double vertex_mem_used = static_cast<double>(faimGraph->memory_manager->next_free_vertex_index * sizeof(VertexDataType)) / (MEGABYTE);
+        double page_mem_used = (static_cast<double>(pages_in_memory * faimGraph->memory_manager->page_size) / (MEGABYTE));
         std::cout << "Vertex Memory used: " << vertex_mem_used << std::endl;
         std::cout << "Edge Memory used: " << page_mem_used << std::endl;
         std::cout << "Total Memory used: " << vertex_mem_used + page_mem_used << std::endl;

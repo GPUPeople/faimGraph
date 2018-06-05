@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
 // BetweennessCentrality.cu
 //
-// aimGraph
+// faimGraph
 //
-// Authors: Martin Winter, martin.winter@icg.tugraz.at
 //------------------------------------------------------------------------------
 //
 #include "BetweennessCentrality.h"
