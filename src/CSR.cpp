@@ -82,13 +82,14 @@ namespace {
 }
 
 template<typename T>
-void CSR<T>::alloc(size_t r, size_t c, size_t n)
+void CSR<T>::alloc(size_t r, size_t c, size_t n, bool allocData)
 {
 	rows = r;
 	cols = c;
 	nnz = n;
 
-	data = std::make_unique<T[]>(n);
+	if(allocData)
+		data = std::make_unique<T[]>(n);
 	col_ids = std::make_unique<unsigned int[]>(n);
 	row_offsets = std::make_unique<unsigned int[]>(r+1);
 }
@@ -194,7 +195,6 @@ void convert(CSR<T>& res, const COO<T>& coo)
 	};
 
 	std::vector<Entry> entries;
-	std::cout << coo.nnz << std::endl;
 	entries.reserve(coo.nnz);
 	for (size_t i = 0; i < coo.nnz; ++i)
 		entries.push_back(Entry{ coo.row_ids[i], coo.col_ids[i], coo.data[i] });
@@ -219,8 +219,8 @@ void convert(CSR<T>& res, const COO<T>& coo)
 	res.row_offsets[coo.rows] = off;
 }
 
-template void CSR<float>::alloc(size_t, size_t, size_t);
-template void CSR<double>::alloc(size_t, size_t, size_t);
+template void CSR<float>::alloc(size_t, size_t, size_t, bool);
+template void CSR<double>::alloc(size_t, size_t, size_t, bool);
 
 template CSR<float> loadCSR(const char * file);
 template CSR<double> loadCSR(const char * file);

@@ -111,6 +111,10 @@ cuda_add_executable(mainfaimGraph
           src/main.cpp
            )
 
+cuda_add_executable(reInitTCfaimGraph 
+          src/tests/reInitTC.cpp
+           )
+
 cuda_add_executable(STCfaimGraph 
           src/algorithms/StaticTriangleCounting.cpp
            )
@@ -163,3 +167,4 @@ TARGET_LINK_LIBRARIES(dynamicVerticesMain faimgraph  ${CUDA_cudart_static_LIBRAR
 TARGET_LINK_LIBRARIES(concurrentTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
 TARGET_LINK_LIBRARIES(queryTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
 TARGET_LINK_LIBRARIES(spmvfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(reInitTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})

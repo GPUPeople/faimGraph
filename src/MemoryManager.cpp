@@ -36,7 +36,8 @@ void MemoryManager::initialize(const std::shared_ptr<Config>& config)
     return;
 
   // Allocate memory
-  HANDLE_ERROR(cudaMalloc((void **)&d_memory, total_memory));
+  if(d_memory == nullptr)
+	HANDLE_ERROR(cudaMalloc((void **)&d_memory, total_memory));
 
   // Point stack pointer to end of device memory
   d_stack_pointer = d_memory;
@@ -50,10 +51,6 @@ void MemoryManager::initialize(const std::shared_ptr<Config>& config)
     exit(-1);
   }
 
-  // Set Indexshift
-  int cachelines_per_vertex_attribute = (int)ceil((float)(number_vertices * sizeof(vertex_t)) / (float)(CACHELINESIZE));
-  index_shift = (cachelines_per_vertex_attribute * CACHELINESIZE);
-
   // Place data pointer after memory_manager and decrement the available memory
   d_data = d_memory + mem_offset;
   decreaseAvailableMemory(mem_offset);
@@ -63,7 +60,7 @@ void MemoryManager::initialize(const std::shared_ptr<Config>& config)
   setEdgesPerBlock();
   setQueueSizeAndPosition(config->testruns_.at(config->testrun_index_)->params->queuesize_);
 
-  start_index = static_cast<uint64_t>((total_memory - (config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2) - config->testruns_.at(config->testrun_index_)->params->stacksize_ - MEMMANOFFSET) / page_size) - 1;
+  start_index = static_cast<uint64_t>((total_memory - (config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2) - config->testruns_.at(config->testrun_index_)->params->stacksize_ - mem_offset) / page_size) - 1;
 
   if (config->testruns_.at(config->testrun_index_)->params->directionality_ == ConfigurationParameters::GraphDirectionality::DIRECTED)
   {
@@ -111,8 +108,7 @@ void MemoryManager::resetFaimGraph(vertex_t number_vertices, vertex_t number_edg
 void MemoryManager::setQueueSizeAndPosition(int size)
 {
   // Setup both queues and stack pointer
-  memory_t* tmp_ptr = d_memory + total_memory;
-  d_page_queue.queue_ = reinterpret_cast<index_t*>(tmp_ptr);
+  d_page_queue.queue_ = reinterpret_cast<index_t*>(d_stack_pointer);
   int maxNumberBlocks = size;
   d_page_queue.queue_ -= maxNumberBlocks;
   d_page_queue.size_ = maxNumberBlocks;
@@ -224,6 +220,27 @@ CSRData::CSRData(const std::unique_ptr<GraphParser>& graph_parser,
                             sizeof(matrix_t) * graph_parser->getMatrixValues().size(),
                             cudaMemcpyHostToDevice));
   }
+}
+
+
+//------------------------------------------------------------------------------
+//
+CSRData::CSRData(vertex_t* offset, vertex_t* adjacency,
+	std::unique_ptr<MemoryManager>& memory_manager,
+	unsigned int number_vertices, unsigned int number_edges) :
+	scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (
+		number_edges +
+		number_vertices + 1 +
+		(4 * number_vertices)) }
+{
+	TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), number_vertices, sizeof(VertexData));
+
+	d_offset = offset;
+	d_adjacency = adjacency;
+	d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
+	d_capacity = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
+	d_block_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
+	d_mem_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
 }
 
 //------------------------------------------------------------------------------

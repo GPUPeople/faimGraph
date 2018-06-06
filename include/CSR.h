@@ -29,7 +29,7 @@ struct CSR
 	std::unique_ptr<unsigned int[]> col_ids;
 
 	CSR() : rows(0), cols(0), nnz(0) { }
-	void alloc(size_t rows, size_t cols, size_t nnz);
+	void alloc(size_t rows, size_t cols, size_t nnz, bool allocData=true);
 };
 
 

@@ -61,7 +61,7 @@ class MemoryManager
     }
 
     // Global device memory
-    memory_t* d_memory; /*!< Holds a pointer to the beginning of the device memory */
+	 memory_t* d_memory{nullptr}; /*!< Holds a pointer to the beginning of the device memory */
     memory_t* d_data;  /*!< Points to the data segment (after memory manager) */
     memory_t* d_stack_pointer; /*!< Holds a pointer to the end of the device memory */
     
@@ -82,7 +82,6 @@ class MemoryManager
     uint64_t free_memory; /*!< How much memory is free at the moment */
     
     // Memory-Layout
-    uint32_t index_shift; /*!< Index Shift is used together with the multiplier to find the start of individual memory segments */
     uint32_t page_size; /*!< Size of a page in Bytes */
     uint32_t next_free_page; /*!< Indicates the index of the next free block */
     uint32_t next_free_vertex_index; /*!< Indicates the index of the next free vertex position */
@@ -374,6 +373,9 @@ class CSRData
     explicit CSRData(const std::unique_ptr<GraphParser>& graph_parser,
                      std::unique_ptr<MemoryManager>& memory_manager,
       unsigned int vertex_offset = 0);
+	 explicit CSRData(vertex_t* offset, vertex_t* adjacency,
+		 std::unique_ptr<MemoryManager>& memory_manager,
+		 unsigned int number_vertices, unsigned int number_edges);
     explicit CSRData(std::unique_ptr<MemoryManager>& memory_manager, 
       unsigned int number_rows, 
       unsigned int vertex_offset = 0);

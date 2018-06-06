@@ -62,6 +62,12 @@ std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> EdgeUpdateManager<VertexDataTyp
 		edge_update->edge_update.push_back(edge_update_data);
 	}
 
+  /*for (auto const& update : edge_update->edge_update)
+  {
+	  if (update.source == 218)
+		  printf("Generate Update %u | %u\n", update.source, update.update.destination);
+  }*/
+
 	// Write data to file to verify
 	static int counter = 0;
 #ifdef DEBUG_VERBOSE_OUPUT

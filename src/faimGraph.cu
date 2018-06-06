@@ -16,6 +16,7 @@
 #include "MemoryManager.h"
 #include "GraphParser.h"
 #include "ConfigurationParser.h"
+#include "CSR.h"
 
 //############################################################################################################################################################
 // Device funtionality
@@ -71,7 +72,6 @@ __global__ void d_setupFaimGraph(MemoryManager* memory_manager,
                                 vertex_t* block_requirements,
                                 vertex_t* mem_offsets,
                                 int number_vertices, 
-                                int index_shift,
                                 int page_size,
                                 ConfigurationParameters::PageLinkage page_linkage)
 {
@@ -148,7 +148,6 @@ __global__ void d_setupFaimGraphMatrix(MemoryManager* memory_manager,
                                       vertex_t* block_requirements,
                                       vertex_t* mem_offsets,
                                       int number_vertices,
-                                      int index_shift,
                                       int page_size,
                                       ConfigurationParameters::PageLinkage page_linkage,
                                       unsigned int vertex_offset = 0,
@@ -224,7 +223,6 @@ __global__ void d_faimGraphToCSR(MemoryManager* memory_manager,
                                     memory_t* memory,
                                     vertex_t* adjacency,
                                     vertex_t* offset,
-                                    int index_shift,
                                     int page_size)
 {
     int tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -271,7 +269,6 @@ __global__ void d_faimGraphMatrixToCSR(MemoryManager* memory_manager,
                                       vertex_t* adjacency,
                                       matrix_t* matrix_values,
                                       vertex_t* offset,
-                                      int index_shift,
                                       int page_size,
                                       vertex_t vertex_offset,
                                       vertex_t number_vertices)
@@ -424,7 +421,6 @@ void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::
                                                                               csr_data->d_block_requirements,
                                                                               csr_data->d_mem_requirements,
                                                                               number_of_vertices,
-                                                                              memory_manager->index_shift,
                                                                               memory_manager->page_size,
                                                                               memory_manager->page_linkage);
 
@@ -446,6 +442,63 @@ template void faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::
 template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
 template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
 template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+
+
+template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
+void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices)
+{
+	// First setup memory manager
+	memory_manager->initialize(config);
+
+	// Setup csr data and calculate launch params
+	std::unique_ptr<CSRData> csr_data(new CSRData(d_offset, d_adjacency, memory_manager, memory_manager->number_vertices, memory_manager->number_edges));
+	int block_size = config->testruns_.at(config->testrun_index_)->params->init_launch_block_size_;
+	int grid_size = (number_vertices / block_size) + 1;
+
+	// Push memory manager information to device
+	updateMemoryManagerDevice(memory_manager);
+
+	// Calculate memory requirements
+	d_calculateMemoryRequirements << < grid_size, block_size >> >((MemoryManager*)memory_manager->d_memory,
+																						csr_data->d_offset,
+																						csr_data->d_neighbours,
+																						csr_data->d_capacity,
+																						csr_data->d_block_requirements,
+																						number_vertices,
+																						memory_manager->page_size);
+
+	// Prefix scan on d_block_requirements to get correct memory offsets
+	thrust::device_ptr<vertex_t> th_block_requirements(csr_data->d_block_requirements);
+	thrust::device_ptr<vertex_t> th_mem_requirements(csr_data->d_mem_requirements);
+	thrust::exclusive_scan(th_block_requirements, th_block_requirements + number_vertices, th_mem_requirements);
+
+	// Setup GPU Streaming memory
+	d_setupFaimGraph<VertexDataType, EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
+																												memory_manager->d_data,
+																												csr_data->d_adjacency,
+																												csr_data->d_offset,
+																												csr_data->d_neighbours,
+																												csr_data->d_capacity,
+																												csr_data->d_block_requirements,
+																												csr_data->d_mem_requirements,
+																												number_vertices,
+																												memory_manager->page_size,
+																												memory_manager->page_linkage);
+
+	// Push memory manager information back to host
+	size_t mem_before_device_update = memory_manager->free_memory;
+	updateMemoryManagerHost(memory_manager);
+
+	// Vertex management data allocated
+	memory_manager->decreaseAvailableMemory(sizeof(VertexDataType) * number_vertices);
+}
+
+template void faimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices);
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices);
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices);
+template void faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices);
+template void faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices);
+template void faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices);
 
 
 //------------------------------------------------------------------------------
@@ -487,7 +540,6 @@ void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::
                                                         csr_matrix_data->d_block_requirements,
                                                         csr_matrix_data->d_mem_requirements,
                                                         csr_matrix_data->matrix_rows,
-                                                        memory_manager->index_shift,
                                                         memory_manager->page_size,
                                                         memory_manager->page_linkage);
 
@@ -546,7 +598,6 @@ void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::
                                                                         csr_data->d_block_requirements,
                                                                         csr_data->d_mem_requirements,
                                                                         number_of_vertices,
-                                                                        memory_manager->index_shift,
                                                                         memory_manager->page_size,
                                                                         memory_manager->page_linkage,
                                                                         vertex_offset,
@@ -610,7 +661,6 @@ void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::
                                                                         csr_data->d_block_requirements,
                                                                         csr_data->d_mem_requirements,
                                                                         number_of_vertices,
-                                                                        memory_manager->index_shift,
                                                                         memory_manager->page_size,
                                                                         memory_manager->page_linkage,
                                                                         vertex_offset,
@@ -631,6 +681,178 @@ void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::
 template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrix, EdgeDataUpdate>::initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset);
 template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpdate>::initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset);
 
+
+//------------------------------------------------------------------------------
+//
+template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
+CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::reinitializeFaimGraph(uint64_t new_size)
+{
+	/*
+	* Three cases:
+	* 1.) Both old and new faimGraph fit in memory at the same time, initialize new memory directly from old memory
+	* 2.) New does not fit in memory while old is in memory, retire to CSR -> init anew
+	* 3.) Size increase not possible any longer
+	*	a.) Retire to CSR and back to Host
+	*	b.) If not possible, retire faimGraph to Host entirely and retire to CSR on host
+	*/
+
+	/*
+	TODO:
+	 * Number Edges does not yet reflect correct count!
+	 *
+	*/
+
+	memory_t* device_memory{nullptr}, *csr_helper{ nullptr };
+	int memory_manager_offset = MEMMANOFFSET * static_cast<int>(ceil(static_cast<float>(sizeof(MemoryManager)) / static_cast<float>(MEMMANOFFSET)));
+	bool allocationSuccessful{ true }, csrSuccessful{ true };
+	CSR<float> host_csr;
+
+	// Attempt allocation
+	if (cudaSuccess != cudaMalloc(&device_memory, new_size))
+	{
+		allocationSuccessful = false;
+		printf("New Allocation is not possible with size %zd\n", new_size);
+	}
+
+	if (allocationSuccessful)
+	{
+		printf("Initialize new faimGraph from old faimGraph\n");
+		//  Both old and new faimGraph fit in memory at the same time, initialize new memory directly from old memory
+
+		/*
+		###########################################################################################################
+		mem_man | vertices | ++++++++++++++++ space ++++++++++++++++++++| pages | stack | vertex_queue | page_queue
+		###########################################################################################################
+		*/
+
+		// Copy over mem_man + vertices
+		HANDLE_ERROR(cudaMemcpy(device_memory, memory_manager->d_memory, memory_manager_offset + (sizeof(VertexDataType) * memory_manager->next_free_vertex_index), cudaMemcpyDeviceToDevice));
+
+		// Copy over pages
+		memory_t* ptr_pages_old_faimGraph = pageAccess<memory_t>(memory_manager->d_data, memory_manager->next_free_page - 1, memory_manager->page_size, memory_manager->start_index);
+		uint64_t new_start_index = static_cast<uint64_t>((new_size - (memory_manager->d_page_queue.size_ * sizeof(index_t) * 2) - config->testruns_.at(config->testrun_index_)->params->stacksize_ - memory_manager_offset) / memory_manager->page_size) - 1;
+		memory_t* ptr_pages_new_faimGraph = pageAccess<memory_t>(device_memory + memory_manager_offset, memory_manager->next_free_page - 1, memory_manager->page_size, new_start_index);
+		HANDLE_ERROR(cudaMemcpy(ptr_pages_new_faimGraph, ptr_pages_old_faimGraph, memory_manager->page_size * (memory_manager->next_free_page), cudaMemcpyDeviceToDevice));
+
+		// Copy over queues
+		memory_t* old_queue_ptr = reinterpret_cast<memory_t*>(memory_manager->d_vertex_queue.queue_);
+		memory_manager->d_page_queue.queue_ = reinterpret_cast<index_t*>(device_memory + new_size);
+		memory_manager->d_page_queue.queue_ -= memory_manager->d_page_queue.size_;
+		memory_manager->d_vertex_queue.queue_ = memory_manager->d_page_queue.queue_ - memory_manager->d_vertex_queue.size_;
+		memory_manager->d_stack_pointer = reinterpret_cast<memory_t*>(memory_manager->d_vertex_queue.queue_);
+		HANDLE_ERROR(cudaMemcpy(memory_manager->d_vertex_queue.queue_, old_queue_ptr, memory_manager->d_page_queue.size_ * sizeof(index_t) * 2, cudaMemcpyDeviceToDevice));
+
+		// Free old memory
+		HANDLE_ERROR(cudaFree(memory_manager->d_memory));
+
+		// Set new pointers
+		memory_manager->d_memory = device_memory;
+		memory_manager->d_data = memory_manager->d_memory + memory_manager_offset;
+
+		// Set appropriate parameters anew
+		memory_manager->total_memory = new_size;
+		memory_manager->free_memory = new_size - (memory_manager->page_size * (memory_manager->next_free_page - 1) + memory_manager_offset + (sizeof(VertexDataType) * memory_manager->next_free_vertex_index) + memory_manager->d_page_queue.size_ * sizeof(index_t) * 2);
+		memory_manager->start_index = new_start_index;
+		updateMemoryManagerDevice(memory_manager);
+	}
+	else
+	{
+		uint64_t csr_size = ((memory_manager->next_free_vertex_index + 1) * sizeof(vertex_t)) + (memory_manager->number_edges * sizeof(index_t));
+		if (cudaSuccess != cudaMalloc(&csr_helper, csr_size))
+		{
+			csrSuccessful = false;
+			printf("CSR allocation is not possible with size %zd\n", csr_size);
+		}
+
+		if (csrSuccessful)
+		{
+			printf("Initialize new faimGraph from CSR\n");
+			// One of 2 choices
+			//   New does not fit in memory while old is in memory, retire to CSR -> init anew
+			//   Retire to CSR and back to Host
+
+			int block_size = 256;
+			int grid_size = (memory_manager->next_free_vertex_index / block_size) + 1;
+			size_t number_adjacency{ 0 };
+
+			vertex_t* offset = reinterpret_cast<vertex_t*>(csr_helper);
+			vertex_t* adjacency = offset + memory_manager->number_vertices;
+
+			number_adjacency = memory_manager->numberEdgesInMemory<VertexDataType>(offset, true);
+			thrust::device_ptr<vertex_t> th_offset(offset);
+			thrust::exclusive_scan(th_offset, th_offset + memory_manager->next_free_vertex_index + 1, th_offset);
+
+			if (number_adjacency != memory_manager->number_edges)
+			{
+				printf("Number Adjacency != Number Edges\n");
+				exit(-1);
+			}
+
+			d_faimGraphToCSR<VertexDataType, EdgeDataType> << < grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
+																														memory_manager->d_data,
+																														adjacency,
+																														offset,
+																														memory_manager->page_size);
+
+			// Release old faimGraph
+			HANDLE_ERROR(cudaFree(memory_manager->d_memory));
+
+			// Start new setup
+			memory_manager->total_memory = new_size;
+			memory_manager->free_memory = new_size;
+			if (cudaSuccess == cudaMalloc((void **)&(memory_manager->d_memory), new_size))
+			{
+				initializeMemory(offset, adjacency, memory_manager->next_free_vertex_index);
+			}
+			else
+			{
+				host_csr.alloc(memory_manager->number_vertices, memory_manager->number_vertices, memory_manager->number_edges, false);
+				// Retire CSR back to host
+				HANDLE_ERROR(cudaMemcpy(host_csr.row_offsets.get(), offset, sizeof(vertex_t) * (memory_manager->number_vertices + 1), cudaMemcpyDeviceToHost));
+				HANDLE_ERROR(cudaMemcpy(host_csr.col_ids.get(), adjacency, sizeof(vertex_t) * memory_manager->number_edges, cudaMemcpyDeviceToHost));
+			}
+		}
+		else
+		{
+			printf("Retire to device\n");
+			// Couldn't even allocate a csr structure to hold the graph, retire back to the host
+			// This is obviously the worst case and very slow
+
+			std::unique_ptr<memory_t[]> host_faimGraph(std::make_unique<memory_t[]>(memory_manager->total_memory));
+			HANDLE_ERROR(cudaMemcpy(host_faimGraph.get(), memory_manager->d_memory + memory_manager_offset, memory_manager->total_memory - memory_manager_offset, cudaMemcpyDeviceToHost));
+			host_csr.alloc(memory_manager->number_vertices, memory_manager->number_vertices, memory_manager->number_edges, false);
+
+			// Transfer host faimGraph to CSR
+			VertexDataType* vertices = reinterpret_cast<VertexDataType*>(host_faimGraph.get());
+			vertex_t accumulated_offset{ 0 };
+			for (int i = 0; i < memory_manager->number_vertices; ++i)
+			{
+				VertexDataType& vertex = vertices[i];
+				host_csr.row_offsets[i] = accumulated_offset;
+				EdgeDataType* edges = pageAccess<EdgeDataType>(host_faimGraph.get(), vertex.mem_index, memory_manager->page_size, memory_manager->start_index);
+				for (int j = 0; j < vertex.neighbours; ++j)
+				{
+					host_csr.col_ids[accumulated_offset + j] = edges[j % memory_manager->edges_per_page].destination;
+					if (((j) % (memory_manager->edges_per_page)) == (memory_manager->edges_per_page - 1))
+					{
+						// Pointer Handling traversal
+						pointerHandlingTraverse<EdgeDataType>(edges, host_faimGraph.get(), memory_manager->page_size, memory_manager->edges_per_page, memory_manager->start_index);
+					}
+				}
+				accumulated_offset += vertex.neighbours;
+			}
+			host_csr.row_offsets[memory_manager->number_vertices] = accumulated_offset;
+		}
+	}
+
+	return std::move(host_csr);
+}
+template CSR<float> faimGraph <VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::reinitializeFaimGraph(uint64_t new_size);
+template CSR<float> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::reinitializeFaimGraph(uint64_t new_size);
+template CSR<float> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::reinitializeFaimGraph(uint64_t new_size);
+template CSR<float> faimGraph <VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::reinitializeFaimGraph(uint64_t new_size);
+template CSR<float> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::reinitializeFaimGraph(uint64_t new_size);
+template CSR<float> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::reinitializeFaimGraph(uint64_t new_size);
 
 //------------------------------------------------------------------------------
 //
@@ -676,7 +898,6 @@ std::unique_ptr<aimGraphCSR> faimGraph<VertexDataType, VertexUpdateType, EdgeDat
                                                                                   memory_manager->d_data,
                                                                                   verifyGraph->d_adjacency,
                                                                                   verifyGraph->d_offset,
-                                                                                  memory_manager->index_shift,
                                                                                   memory_manager->page_size);
 
     // Copy adjacency to host
@@ -761,7 +982,6 @@ std::unique_ptr<aimGraphCSR> faimGraph<VertexDataType, VertexUpdateType, EdgeDat
                                                                                         verifyGraph->d_adjacency,
                                                                                         verifyGraph->d_matrix_values,
                                                                                         verifyGraph->d_offset,
-                                                                                        memory_manager->index_shift,
                                                                                         memory_manager->page_size,
                                                                                         vertex_offset,
                                                                                         number_vertices);

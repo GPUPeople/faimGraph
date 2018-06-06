@@ -13,11 +13,14 @@
 #include "VertexUpdate.h"
 #include "MemoryManager.h"
 #include "ConfigurationParser.h"
+#include "GraphParser.h"
 
 #define MEMORYOVERALLOCATION 1.0f
 
 // Forward declaration
 class GraphParser;
+template <typename DataType>
+class CSR;
 
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
 class faimGraph
@@ -31,9 +34,13 @@ public:
   
   // Setup
   void initializeMemory(std::unique_ptr<GraphParser>& graph_parser);
+  void initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices);
   void initializefaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data);
   void initializefaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset = 0);
   void initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset = 0);
+
+  // Reinitialize
+  CSR<float> reinitializeFaimGraph(uint64_t new_size);
 
   // Updates
   void edgeInsertion();
@@ -53,3 +60,4 @@ public:
   std::unique_ptr<EdgeUpdateManager<VertexDataType, EdgeDataType, EdgeUpdateType>> edge_update_manager;
   std::unique_ptr<VertexUpdateManager<VertexDataType, VertexUpdateType>> vertex_update_manager;
 };
+

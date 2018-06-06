@@ -434,25 +434,25 @@ __forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataSemanti
 // Traversal
 //
 template <typename EdgeDataType>
-__forceinline__ __device__ void pointerHandlingTraverse(EdgeDataType*& adjacency_list, memory_t* memory, int page_size, vertex_t edges_per_page, uint64_t& start_index)
+__forceinline__ __device__ __host__ void pointerHandlingTraverse(EdgeDataType*& adjacency_list, memory_t* memory, int page_size, vertex_t edges_per_page, uint64_t& start_index)
 {
   adjacency_list = pageAccess<EdgeDataType>(memory, *((index_t*)adjacency_list), page_size, start_index);
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingTraverse<EdgeDataWeightSOA>(EdgeDataWeightSOA*& adjacency_list, memory_t* edgedata_start_index, int page_size, vertex_t edges_per_page, uint64_t& start_index)
+__forceinline__ __device__ __host__ void pointerHandlingTraverse<EdgeDataWeightSOA>(EdgeDataWeightSOA*& adjacency_list, memory_t* edgedata_start_index, int page_size, vertex_t edges_per_page, uint64_t& start_index)
 {
   adjacency_list = pageAccess<EdgeDataWeightSOA>(edgedata_start_index, *((index_t*)((adjacency_list) + (edges_per_page * (SOA_OFFSET_WEIGHT)))), page_size, start_index);
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingTraverse<EdgeDataMatrixSOA>(EdgeDataMatrixSOA*& adjacency_list, memory_t* edgedata_start_index, int page_size, vertex_t edges_per_page, uint64_t& start_index)
+__forceinline__ __device__ __host__ void pointerHandlingTraverse<EdgeDataMatrixSOA>(EdgeDataMatrixSOA*& adjacency_list, memory_t* edgedata_start_index, int page_size, vertex_t edges_per_page, uint64_t& start_index)
 {
   adjacency_list = pageAccess<EdgeDataMatrixSOA>(edgedata_start_index, *((index_t*)((adjacency_list)+(edges_per_page * (SOA_OFFSET_MATRIX)))), page_size, start_index);
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingTraverse<EdgeDataSemanticSOA>(EdgeDataSemanticSOA*& adjacency_list, memory_t* edgedata_start_index, int page_size, vertex_t edges_per_page, uint64_t& start_index)
+__forceinline__ __device__ __host__ void pointerHandlingTraverse<EdgeDataSemanticSOA>(EdgeDataSemanticSOA*& adjacency_list, memory_t* edgedata_start_index, int page_size, vertex_t edges_per_page, uint64_t& start_index)
 {
   adjacency_list = pageAccess<EdgeDataSemanticSOA>(edgedata_start_index, *((index_t*)((adjacency_list) + (edges_per_page * (SOA_OFFSET_TIMESTAMP2)))), page_size, start_index);
 }
