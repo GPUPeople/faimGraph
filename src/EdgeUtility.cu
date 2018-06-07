@@ -688,7 +688,8 @@ std::unique_ptr<EdgeUpdatePreProcessing<UpdateDataType>> EdgeUpdateManager<Verte
 {
   std::unique_ptr<EdgeUpdatePreProcessing<UpdateDataType>> preprocessed = std::make_unique<EdgeUpdatePreProcessing<UpdateDataType>>(static_cast<uint32_t>(memory_manager->next_free_vertex_index),
                                                                                                                              static_cast<vertex_t>(updates->edge_update.size()),
-                                                                                                                             memory_manager);
+                                                                                                                             memory_manager,
+																																										static_cast<size_t>(sizeof(VertexDataType)));
   int batch_size = updates->edge_update.size();
   int block_size = config->testruns_.at(config->testrun_index_)->params->init_launch_block_size_;
   int grid_size = (batch_size / block_size) + 1;
@@ -726,7 +727,8 @@ std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<Vertex
 {
   std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> preprocessed = std::make_unique<EdgeUpdatePreProcessing<EdgeDataUpdate>>(static_cast<uint32_t>(memory_manager->next_free_vertex_index),
                                                                                                                                     static_cast<vertex_t>(queries->edge_update.size()),
-                                                                                                                                    memory_manager);
+                                                                                                                                    memory_manager,
+																																												sizeof(VertexDataType));
   int batch_size = queries->edge_update.size();
   int block_size = config->testruns_.at(config->testrun_index_)->params->init_launch_block_size_;
   int grid_size = (batch_size / block_size) + 1;
@@ -756,7 +758,7 @@ template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManag
 template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexDataWeight, EdgeDataWeightSOA>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
 template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexDataSemantic, EdgeDataSemanticSOA>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
 
-#define UPDATE_BASED_DUPLICATE_CHECKING
+
 
 //------------------------------------------------------------------------------
 //
@@ -769,17 +771,6 @@ void EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>::edgeUpdate
   int block_size = 256; // config->testruns_.at(config->testrun_index_)->params->init_launch_block_size_;
   int grid_size = (memory_manager->next_free_vertex_index / block_size) + 1;
 
-  TemporaryMemoryAccessStack temp_memory_dispenser(memory_manager.get(), memory_manager->d_stack_pointer);
-  temp_memory_dispenser.getTemporaryMemory<index_t>(memory_manager->next_free_vertex_index + 1);
-  temp_memory_dispenser.getTemporaryMemory<index_t>(memory_manager->next_free_vertex_index + 1);
-  temp_memory_dispenser.getTemporaryMemory<index_t>(batch_size);
-  index_t* d_deletion_helper = temp_memory_dispenser.getTemporaryMemory<index_t>(batch_size);
-  HANDLE_ERROR(cudaMemset(d_deletion_helper,
-                          0,
-                          sizeof(index_t) * batch_size));
-
-
-
   // Duplicate Checking in Graph (sorted updates)
 #ifdef UPDATE_BASED_DUPLICATE_CHECKING
   block_size = 256;
@@ -791,6 +782,14 @@ void EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>::edgeUpdate
 																																												batch_size,
 																																												preprocessed->d_update_src_offsets);
 #else
+  TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), memory_manager->next_free_vertex_index, sizeof(VertexData));
+  temp_memory_dispenser.getTemporaryMemory<UpdateDataType>(batch_size);
+  temp_memory_dispenser.getTemporaryMemory<index_t>(memory_manager->next_free_vertex_index + 1);
+  temp_memory_dispenser.getTemporaryMemory<index_t>(memory_manager->next_free_vertex_index + 1);
+  index_t* d_deletion_helper = temp_memory_dispenser.getTemporaryMemory<index_t>(batch_size);
+  HANDLE_ERROR(cudaMemset(d_deletion_helper,
+	  0,
+	  sizeof(index_t) * batch_size));
   block_size = WARPSIZE * MULTIPLICATOR;
   grid_size = (memory_manager->next_free_vertex_index / MULTIPLICATOR) + 1;
   d_duplicateCheckingInSortedBatch2Graph<VertexDataType, EdgeDataType, UpdateDataType> << < grid_size, block_size >> >((MemoryManager*)memory_manager->d_memory,

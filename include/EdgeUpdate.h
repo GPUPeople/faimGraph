@@ -56,9 +56,10 @@ class EdgeUpdatePreProcessing
 {
 public:
 	
-	EdgeUpdatePreProcessing(vertex_t number_vertices, vertex_t batch_size, std::unique_ptr<MemoryManager>& memory_manager)
+	EdgeUpdatePreProcessing(vertex_t number_vertices, vertex_t batch_size, std::unique_ptr<MemoryManager>& memory_manager, size_t sizeofVertexData)
 	{
-		TemporaryMemoryAccessStack temp_memory_dispenser(memory_manager.get(), memory_manager->d_stack_pointer);
+		TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), number_vertices, sizeofVertexData);
+		temp_memory_dispenser.getTemporaryMemory<UpdateDataType>(batch_size); // Move after update data
 
 		// Now let's set the member pointers
 		d_edge_src_counter = temp_memory_dispenser.getTemporaryMemory<index_t>(number_vertices + 1);

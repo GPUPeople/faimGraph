@@ -171,6 +171,8 @@ bool GraphParser::parseMMGraph()
 	memcpy(&adjacency_[0], csr_mat.col_ids.get(), sizeof(vertex_t) * (number_edges));
 	memcpy(&matrix_values_[0], csr_mat.data.get(), sizeof(float) * (number_edges));
 
+	std::cout << "#v: " << number_vertices << " and #e: " << number_edges << std::endl;
+
 	getFreshGraph();
 	return true;
 }

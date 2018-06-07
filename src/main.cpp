@@ -146,6 +146,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
   for (auto batchsize : testrun->batchsizes)
   {
+	  if (batchsize > MAXIMAL_BATCH_SIZE)
+		  return;
     std::cout << "Batchsize: " << batchsize << std::endl;
     for (const auto& graph : testrun->graphs)
     {
@@ -182,7 +184,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
         
 		  faimGraph->initializeMemory(parser);
         
-        time_diff = end_clock(ce_start, ce_stop);
+		  time_diff = end_clock(ce_start, ce_stop);
         if(i >= warmup_rounds)
           time_elapsed_init += time_diff;        
 

@@ -80,6 +80,9 @@ using MatrixList_t = std::vector<matrix_t>;
 #define FALSE 0
 #define TRUE 1
 
+#define UPDATE_BASED_DUPLICATE_CHECKING
+constexpr int MAXIMAL_BATCH_SIZE = 1000000;
+
 //------------------------------------------------------------------------------
 // Kernel Params
 //------------------------------------------------------------------------------

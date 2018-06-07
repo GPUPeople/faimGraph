@@ -147,9 +147,8 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 		{
 			// Timing information
 			float time_elapsed_init = 0;
-			float time_elapsed_edgeinsertion = 0;
-			float time_elapsed_edgedeletion = 0; 
-			int warmup_rounds = 2;
+			float time_elapsed_reinit = 0;
+			int warmup_rounds = 0;
 
 			//Setup graph parser and read in file
 			std::unique_ptr<GraphParser> parser(new GraphParser(graph));
@@ -172,17 +171,23 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 
 				printCUDAStats("Before Init");
 				config->device_mem_size_ = device_mem_size;
-				std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
 
+				std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> faimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+				
+				start_clock(ce_start, ce_stop);
 				faimGraph->initializeMemory(parser);
+				time_elapsed_init += end_clock(ce_start, ce_stop);
 
 				printCUDAStats("After Init");
 
-				for (int j = 0; j < 10; ++j)
+				for (int j = 0; j < testrun->params->update_rounds_; ++j)
 				{
 					// Test reinitialization
-					faimGraph->config->device_mem_size_ *= 1.10;
-					auto return_csr = faimGraph->reinitializeFaimGraph(GIGABYTE * faimGraph->config->device_mem_size_);
+					/*faimGraph->config->device_mem_size_ *= 1.10;*/
+
+					start_clock(ce_start, ce_stop);
+					auto return_csr = faimGraph->reinitializeFaimGraph(1.0f);
+					time_elapsed_reinit += end_clock(ce_start, ce_stop);
 
 					printCUDAStats("After Re-Init");
 
@@ -192,6 +197,11 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 				// Let's retrieve a fresh graph
 				parser->getFreshGraph();
 			}
+			std::cout << "Time elapsed during Initialization:   ";
+			std::cout << std::setw(10) << time_elapsed_init / static_cast<float>(testrun->params->rounds_) << " ms" << std::endl;
+
+			std::cout << "Time elapsed during Re-Initialization:   ";
+			std::cout << std::setw(10) << time_elapsed_reinit / static_cast<float>(testrun->params->rounds_ * testrun->params->update_rounds_) << " ms" << std::endl;
 		}
 	}
 

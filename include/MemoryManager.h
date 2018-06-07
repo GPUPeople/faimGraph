@@ -102,6 +102,7 @@ class MemoryManager
     // Initialization functionality
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+	 template <typename VertexDataType, typename EdgeDataType>
     void initialize(const std::shared_ptr<Config>& config);
 
     //! Sets number of edges per block
@@ -119,6 +120,10 @@ class MemoryManager
 
     //! Reset aimGraph
     void resetFaimGraph(vertex_t number_vertices, vertex_t number_edges);
+
+	 //! Estimate initial storage requirements for faimGraph
+	 template <typename VertexDataType, typename EdgeDataType>
+	 void estimateStorageRequirements(const std::shared_ptr<Config>& config);
 
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // General use

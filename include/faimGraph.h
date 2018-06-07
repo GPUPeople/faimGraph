@@ -40,7 +40,7 @@ public:
   void initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset = 0);
 
   // Reinitialize
-  CSR<float> reinitializeFaimGraph(uint64_t new_size);
+  CSR<float> reinitializeFaimGraph(float overallocation_factor);
 
   // Updates
   void edgeInsertion();

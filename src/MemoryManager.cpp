@@ -30,37 +30,17 @@ MemoryManager::MemoryManager(uint64_t memory_size, const std::shared_ptr<Config>
 
 //------------------------------------------------------------------------------
 //
+template <typename VertexDataType, typename EdgeDataType>
 void MemoryManager::initialize(const std::shared_ptr<Config>& config)
 {
   if (initialized)
     return;
 
-  // Allocate memory
-  if(d_memory == nullptr)
-	HANDLE_ERROR(cudaMalloc((void **)&d_memory, total_memory));
-
-  // Point stack pointer to end of device memory
-  d_stack_pointer = d_memory;
-  d_stack_pointer += total_memory;
-
-  // We want cacheline aligned memory
-  int mem_offset = MEMMANOFFSET * static_cast<int>(ceil(static_cast<float>(sizeof(MemoryManager)) / static_cast<float>(MEMMANOFFSET)));
-  if (mem_offset > MEMMANOFFSET)
-  {
-    std::cout << "Re-Evaluate size constraints" << std::endl;
-    exit(-1);
-  }
-
-  // Place data pointer after memory_manager and decrement the available memory
-  d_data = d_memory + mem_offset;
-  decreaseAvailableMemory(mem_offset);
-
   // Initialisation
   setGraphMode(config);
   setEdgesPerBlock();
+  estimateStorageRequirements<VertexDataType, EdgeDataType>(config);
   setQueueSizeAndPosition(config->testruns_.at(config->testrun_index_)->params->queuesize_);
-
-  start_index = static_cast<uint64_t>((total_memory - (config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2) - config->testruns_.at(config->testrun_index_)->params->stacksize_ - mem_offset) / page_size) - 1;
 
   if (config->testruns_.at(config->testrun_index_)->params->directionality_ == ConfigurationParameters::GraphDirectionality::DIRECTED)
   {
@@ -72,6 +52,86 @@ void MemoryManager::initialize(const std::shared_ptr<Config>& config)
   }
   initialized = true;
 }
+
+template void MemoryManager::initialize<VertexData, EdgeData>(const std::shared_ptr<Config>& config);
+template void MemoryManager::initialize<VertexData, EdgeDataMatrix>(const std::shared_ptr<Config>& config);
+template void MemoryManager::initialize<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config);
+template void MemoryManager::initialize<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config);
+template void MemoryManager::initialize<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config);
+template void MemoryManager::initialize<VertexData, EdgeDataMatrixSOA>(const std::shared_ptr<Config>& config);
+template void MemoryManager::initialize<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config);
+template void MemoryManager::initialize<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);
+
+template<typename EdgeDataType>
+uint32_t estimateAdditionalMemoryRequirements(const std::shared_ptr<Config>& config, vertex_t number_vertices)
+{
+	uint32_t requirements = MAXIMAL_BATCH_SIZE * EdgeDataType::sizeOfUpdateData();
+	if (config->testruns_.at(config->testrun_index_)->params->update_variant_ == ConfigurationParameters::UpdateVariant::VERTEXCENTRIC ||
+		config->testruns_.at(config->testrun_index_)->params->update_variant_ == ConfigurationParameters::UpdateVariant::VERTEXCENTRICSORTED)
+	{
+		// EdgeUpdate Preprocessing
+		requirements += (number_vertices + 1) * 2 * sizeof(index_t);
+	}
+	return requirements;
+}
+
+//#define ESTIMATE_MEMORY
+
+//------------------------------------------------------------------------------
+//
+template <typename VertexDataType, typename EdgeDataType>
+void MemoryManager::estimateStorageRequirements(const std::shared_ptr<Config>& config)
+{
+	// We want cacheline aligned memory
+	int mem_offset = MEMMANOFFSET * static_cast<int>(ceil(static_cast<float>(sizeof(MemoryManager)) / static_cast<float>(MEMMANOFFSET)));
+	if (mem_offset > MEMMANOFFSET)
+	{
+		std::cout << "Re-Evaluate size constraints" << std::endl;
+		exit(-1);
+	}
+
+#ifdef ESTIMATE_MEMORY
+	uint32_t additional_space_requirements = estimateAdditionalMemoryRequirements<EdgeDataType>(config, number_vertices);
+	float page_flux_factor = 1.5f;
+	uint32_t page_estimation_per_vertex = (ceil(static_cast<float>(number_edges) / static_cast<float>(number_vertices * edges_per_page)) * number_vertices) * page_flux_factor;
+	printf("Page Estimation per vertex: %u %u %u %u\n", page_estimation_per_vertex, number_edges, number_vertices, edges_per_page);
+	uint64_t size_estimation = mem_offset + 
+		sizeof(VertexData) * number_vertices +
+		page_estimation_per_vertex * page_size + 
+		(config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2) + 
+		config->testruns_.at(config->testrun_index_)->params->stacksize_ + 
+		additional_space_requirements; 
+	total_memory = size_estimation;
+
+	printf("Size Estimation : %u MB\n", size_estimation / (1024 * 1024));
+	
+#endif
+
+
+	// Allocate memory
+	if (d_memory == nullptr)
+	{
+		HANDLE_ERROR(cudaMalloc((void **)&d_memory, total_memory));
+	}
+
+	// Point stack pointer to end of device memory
+	d_stack_pointer = d_memory;
+	d_stack_pointer += total_memory;
+
+	// Place data pointer after memory_manager and decrement the available memory
+	d_data = d_memory + mem_offset;
+	decreaseAvailableMemory(mem_offset);
+
+	start_index = static_cast<uint64_t>((total_memory - (config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2) - config->testruns_.at(config->testrun_index_)->params->stacksize_ - mem_offset) / page_size) - 1;
+}
+template void MemoryManager::estimateStorageRequirements<VertexData, EdgeData>(const std::shared_ptr<Config>& config);
+template void MemoryManager::estimateStorageRequirements<VertexData, EdgeDataMatrix>(const std::shared_ptr<Config>& config);
+template void MemoryManager::estimateStorageRequirements<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config);
+template void MemoryManager::estimateStorageRequirements<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config);
+template void MemoryManager::estimateStorageRequirements<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config);
+template void MemoryManager::estimateStorageRequirements<VertexData, EdgeDataMatrixSOA>(const std::shared_ptr<Config>& config);
+template void MemoryManager::estimateStorageRequirements<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config);
+template void MemoryManager::estimateStorageRequirements<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //

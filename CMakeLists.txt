@@ -74,6 +74,27 @@ if (CUDA_BUILD_DEBUG)
 	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS};-G")
 endif ()
 
+SET(FAIMGRAPHHEADERS
+	include/ConfigurationParser.h
+	include/COO.h 
+	include/CSR.h 
+	include/CSVWriter.h 
+	include/dCSR.h 
+	include/Definitions.h 
+	include/EdgeUpdate.h 
+	include/faimGraph.h 
+	include/GraphParser.h 
+	include/MemoryLayout.h 
+	include/MemoryManager.h 
+	include/Queue.h 
+	include/SpMM.h 
+	include/SpMV.h 
+	include/Utility.h 
+	include/Vector.h 
+	include/VertexMapper.h 
+	include/VertexUpdate.h 
+)
+
 cuda_add_library(faimgraph
 					src/COO.cpp
 					src/CSR.cpp
@@ -105,6 +126,7 @@ cuda_add_library(faimgraph
 					src/algorithms/ClusteringCoefficients.cu
 					src/algorithms/BetweennessCentrality.cu
 					src/algorithms/ConnectedComponents.cu
+					${FAIMGRAPHHEADERS}
         )
 
 cuda_add_executable(mainfaimGraph 
@@ -117,22 +139,28 @@ cuda_add_executable(reInitTCfaimGraph
 
 cuda_add_executable(STCfaimGraph 
           src/algorithms/StaticTriangleCounting.cpp
+		  include/algorithms/STC.h
+		  include/algorithms/StaticTriangleCounting.h
            )
 
 cuda_add_executable(ClusteringCoefficients 
           src/algorithms/ClusteringCoefficients.cpp
+		  include/algorithms/ClusteringCoefficients.h 
            )
 
 cuda_add_executable(ConnectedComponents 
           src/algorithms/ConnectedComponents.cpp
+		  include/algorithms/ConnectedComponents.h 
            )
 
 cuda_add_executable(BetweennessCentrality	 
           src/algorithms/BetweennessCentrality.cpp
+		  include/algorithms/BetweennessCentrality.h 
            )
 
 cuda_add_executable(PageRankfaimGraph 
           src/algorithms/PageRank.cpp
+		  include/algorithms/PageRank.h 
            )
 
 cuda_add_executable(continuousTCfaimGraph 

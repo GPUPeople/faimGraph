@@ -13,10 +13,13 @@
 //------------------------------------------------------------------------------
 //
 
+struct EdgeDataUpdate;
+
 struct EdgeData
 {
   vertex_t destination;
   friend __host__ __device__ bool operator<(const EdgeData &lhs, const EdgeData &rhs) { return (lhs.destination < rhs.destination); }
+  static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t); }
 };
 
 struct EdgeDataWeight
@@ -24,6 +27,7 @@ struct EdgeDataWeight
   vertex_t destination;
   vertex_t weight;
   friend __host__ __device__ bool operator<(const EdgeDataWeight &lhs, const EdgeDataWeight &rhs) { return (lhs.destination < rhs.destination); };
+  static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t); }
 };
 
 struct EdgeDataSemantic
@@ -34,6 +38,7 @@ struct EdgeDataSemantic
   vertex_t timestamp_1;
   vertex_t timestamp_2;
   friend __host__ __device__ bool operator<(const EdgeDataSemantic &lhs, const EdgeDataSemantic &rhs) { return (lhs.destination < rhs.destination); };
+  static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t); }
 };
 
 struct EdgeDataMatrix
@@ -41,6 +46,7 @@ struct EdgeDataMatrix
   vertex_t destination;
   matrix_t matrix_value;
   friend __host__ __device__ bool operator<(const EdgeDataMatrix &lhs, const EdgeDataMatrix &rhs) { return (lhs.destination < rhs.destination); };
+  static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t) + sizeof(matrix_t); }
 };
 
 
@@ -52,21 +58,25 @@ struct EdgeDataMatrix
 struct EdgeDataSOA
 {
 	vertex_t destination;
+	static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t); }
 };
 
 struct EdgeDataWeightSOA
 {
 	vertex_t destination;
+	static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t); }
 };
 
 struct EdgeDataSemanticSOA
 {
 	vertex_t destination;
+	static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t) + sizeof(vertex_t); }
 };
 
 struct EdgeDataMatrixSOA
 {
   vertex_t destination;
+  static size_t sizeOfUpdateData() { return sizeof(vertex_t) + sizeof(vertex_t) + sizeof(matrix_t); }
 };
 
 //------------------------------------------------------------------------------

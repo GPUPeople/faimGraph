@@ -384,7 +384,7 @@ template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataT
 void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeMemory(std::unique_ptr<GraphParser>& graph_parser)
 {
   // First setup memory manager
-  memory_manager->initialize(config);
+  memory_manager->initialize<VertexDataType, EdgeDataType>(config);
 
   // Set data in memory manager
   int number_of_vertices = graph_parser->getNumberOfVertices();
@@ -448,7 +448,7 @@ template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataT
 void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializeMemory(vertex_t* d_offset, vertex_t* d_adjacency, int number_vertices)
 {
 	// First setup memory manager
-	memory_manager->initialize(config);
+	memory_manager->initialize<VertexDataType, EdgeDataType>(config);
 
 	// Setup csr data and calculate launch params
 	std::unique_ptr<CSRData> csr_data(new CSRData(d_offset, d_adjacency, memory_manager, memory_manager->number_vertices, memory_manager->number_edges));
@@ -507,7 +507,7 @@ template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataT
 void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializefaimGraphMatrix(std::unique_ptr<CSRMatrixData>& csr_matrix_data)
 {
   // First setup memory manager
-  memory_manager->initialize(config);
+  memory_manager->initialize<VertexDataType, EdgeDataType>(config);
 
   int block_size = config->testruns_.at(config->testrun_index_)->params->init_launch_block_size_;
   int grid_size = (csr_matrix_data->matrix_rows / block_size) + 1;
@@ -561,7 +561,7 @@ template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataT
 void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializefaimGraphMatrix(std::unique_ptr<GraphParser>& graph_parser, unsigned int vertex_offset)
 {
   // First setup memory manager
-  memory_manager->initialize(config);
+  memory_manager->initialize<VertexDataType, EdgeDataType>(config);
 
   int number_of_vertices = graph_parser->getNumberOfVertices();
 
@@ -622,7 +622,7 @@ template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataT
 void faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::initializefaimGraphEmptyMatrix(unsigned int number_rows, unsigned int vertex_offset)
 {
   // First setup memory manager
-  memory_manager->initialize(config);
+  memory_manager->initialize<VertexDataType, EdgeDataType>(config);
 
   int number_of_vertices = number_rows;
 
@@ -685,7 +685,7 @@ template void faimGraph<VertexData, VertexUpdate, EdgeDataMatrixSOA, EdgeDataUpd
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename VertexUpdateType, typename EdgeDataType, typename EdgeUpdateType>
-CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::reinitializeFaimGraph(uint64_t new_size)
+CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateType>::reinitializeFaimGraph(float overallocation_factor)
 {
 	/*
 	* Three cases:
@@ -706,6 +706,7 @@ CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateT
 	int memory_manager_offset = MEMMANOFFSET * static_cast<int>(ceil(static_cast<float>(sizeof(MemoryManager)) / static_cast<float>(MEMMANOFFSET)));
 	bool allocationSuccessful{ true }, csrSuccessful{ true };
 	CSR<float> host_csr;
+	uint64_t new_size = memory_manager->total_memory * overallocation_factor;
 
 	// Attempt allocation
 	if (cudaSuccess != cudaMalloc(&device_memory, new_size))
@@ -716,7 +717,7 @@ CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateT
 
 	if (allocationSuccessful)
 	{
-		printf("Initialize new faimGraph from old faimGraph\n");
+		/*printf("Initialize new faimGraph from old faimGraph\n");*/
 		//  Both old and new faimGraph fit in memory at the same time, initialize new memory directly from old memory
 
 		/*
@@ -766,7 +767,7 @@ CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateT
 
 		if (csrSuccessful)
 		{
-			printf("Initialize new faimGraph from CSR\n");
+			/*printf("Initialize new faimGraph from CSR\n");*/
 			// One of 2 choices
 			//   New does not fit in memory while old is in memory, retire to CSR -> init anew
 			//   Retire to CSR and back to Host
@@ -776,15 +777,13 @@ CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateT
 			size_t number_adjacency{ 0 };
 
 			vertex_t* offset = reinterpret_cast<vertex_t*>(csr_helper);
-			vertex_t* adjacency = offset + memory_manager->number_vertices;
+			vertex_t* adjacency = offset + (memory_manager->next_free_vertex_index + 1);
 
 			number_adjacency = memory_manager->numberEdgesInMemory<VertexDataType>(offset, true);
-			thrust::device_ptr<vertex_t> th_offset(offset);
-			thrust::exclusive_scan(th_offset, th_offset + memory_manager->next_free_vertex_index + 1, th_offset);
 
 			if (number_adjacency != memory_manager->number_edges)
 			{
-				printf("Number Adjacency != Number Edges\n");
+				printf("Number Adjacency %u != Number Edges %u\n", number_adjacency, memory_manager->number_edges);
 				exit(-1);
 			}
 
@@ -800,15 +799,17 @@ CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateT
 			// Start new setup
 			memory_manager->total_memory = new_size;
 			memory_manager->free_memory = new_size;
+			memory_manager->initialized = false;
 			if (cudaSuccess == cudaMalloc((void **)&(memory_manager->d_memory), new_size))
 			{
 				initializeMemory(offset, adjacency, memory_manager->next_free_vertex_index);
 			}
 			else
 			{
-				host_csr.alloc(memory_manager->number_vertices, memory_manager->number_vertices, memory_manager->number_edges, false);
+				printf("Retire to host with a CSR\n");
+				host_csr.alloc(memory_manager->next_free_vertex_index, memory_manager->next_free_vertex_index, memory_manager->number_edges, false);
 				// Retire CSR back to host
-				HANDLE_ERROR(cudaMemcpy(host_csr.row_offsets.get(), offset, sizeof(vertex_t) * (memory_manager->number_vertices + 1), cudaMemcpyDeviceToHost));
+				HANDLE_ERROR(cudaMemcpy(host_csr.row_offsets.get(), offset, sizeof(vertex_t) * (memory_manager->next_free_vertex_index + 1), cudaMemcpyDeviceToHost));
 				HANDLE_ERROR(cudaMemcpy(host_csr.col_ids.get(), adjacency, sizeof(vertex_t) * memory_manager->number_edges, cudaMemcpyDeviceToHost));
 			}
 		}
@@ -847,12 +848,12 @@ CSR<float> faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, EdgeUpdateT
 
 	return std::move(host_csr);
 }
-template CSR<float> faimGraph <VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::reinitializeFaimGraph(uint64_t new_size);
-template CSR<float> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::reinitializeFaimGraph(uint64_t new_size);
-template CSR<float> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::reinitializeFaimGraph(uint64_t new_size);
-template CSR<float> faimGraph <VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::reinitializeFaimGraph(uint64_t new_size);
-template CSR<float> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::reinitializeFaimGraph(uint64_t new_size);
-template CSR<float> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::reinitializeFaimGraph(uint64_t new_size);
+template CSR<float> faimGraph <VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>::reinitializeFaimGraph(float overallocation_factor);
+template CSR<float> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>::reinitializeFaimGraph(float overallocation_factor);
+template CSR<float> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::reinitializeFaimGraph(float overallocation_factor);
+template CSR<float> faimGraph <VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>::reinitializeFaimGraph(float overallocation_factor);
+template CSR<float> faimGraph <VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::reinitializeFaimGraph(float overallocation_factor);
+template CSR<float> faimGraph <VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::reinitializeFaimGraph(float overallocation_factor);
 
 //------------------------------------------------------------------------------
 //
