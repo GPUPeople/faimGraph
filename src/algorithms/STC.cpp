@@ -21,7 +21,6 @@
 #include "ConfigurationParser.h"
 #include "CSVWriter.h"
 #include "STC.h"
-#include "StaticTriangleCounting.h"
 
 int arrayBlocks[]={16000};
 int arrayBlockSize[]={32,64,96,128,192,256};
@@ -35,7 +34,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./STCfaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./STC <configuration-file>" << std::endl;
     return RET_ERROR;
   }
   std::cout << "########## faimGraph Static Triangle Counting ##########" << std::endl;

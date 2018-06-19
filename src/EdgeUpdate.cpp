@@ -26,8 +26,6 @@ template <typename VertexDataType, typename EdgeDataType, typename EdgeUpdateTyp
 std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> EdgeUpdateManager<VertexDataType, EdgeDataType, EdgeUpdateType>::generateEdgeUpdates(vertex_t number_vertices, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset)
 {
 	std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> edge_update(std::make_unique<EdgeUpdateBatch<EdgeUpdateType>>());
-  // std::cout << "Generate random updates" << std::endl;
-  // edge_update->edge_update.reserve(batch_size);
 	// Generate random edge updates
 	srand(seed + 1);
 	for (vertex_t i = 0; i < batch_size/2; ++i)
@@ -41,8 +39,6 @@ std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> EdgeUpdateManager<VertexDataTyp
       source = intermediate;
 		edge_update_data.source = source;
 		edge_update_data.update.destination = rand() % number_vertices;
-    /*if ((edge_update_data.source == 888) )
-      std::cout << "Generated insertion update " << edge_update_data.source << " | " << edge_update_data.update.destination << std::endl;*/
 		edge_update->edge_update.push_back(edge_update_data);
 	}
 
@@ -57,8 +53,6 @@ std::unique_ptr<EdgeUpdateBatch<EdgeUpdateType>> EdgeUpdateManager<VertexDataTyp
       source = intermediate;
 		edge_update_data.source = source;
 		edge_update_data.update.destination = rand() % number_vertices;
-    /*if ((edge_update_data.source == 888) )
-      std::cout << "Generated insertion update " << edge_update_data.source << " | " << edge_update_data.update.destination << std::endl;*/
 		edge_update->edge_update.push_back(edge_update_data);
 	}
 

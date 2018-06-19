@@ -10,7 +10,6 @@
 #include "Utility.h"
 #include "Definitions.h"
 
-
 void queryAndPrintDeviceProperties()
 {
     cudaDeviceProp prop;

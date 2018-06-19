@@ -63,19 +63,32 @@ template void MemoryManager::initialize<VertexDataWeight, EdgeDataWeightSOA>(con
 template void MemoryManager::initialize<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);
 
 template<typename EdgeDataType>
-uint32_t estimateAdditionalMemoryRequirements(const std::shared_ptr<Config>& config, vertex_t number_vertices)
+uint64_t estimateAdditionalMemoryRequirements(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t number_edges)
 {
-	uint32_t requirements = MAXIMAL_BATCH_SIZE * EdgeDataType::sizeOfUpdateData();
+	uint64_t requirements{ 0 }, update_requirements{ 0 }, csr_requirements{ 0 };
+
+	// Calculate Update Requirements
+	update_requirements = MAXIMAL_BATCH_SIZE * EdgeDataType::sizeOfUpdateData();
 	if (config->testruns_.at(config->testrun_index_)->params->update_variant_ == ConfigurationParameters::UpdateVariant::VERTEXCENTRIC ||
 		config->testruns_.at(config->testrun_index_)->params->update_variant_ == ConfigurationParameters::UpdateVariant::VERTEXCENTRICSORTED)
 	{
 		// EdgeUpdate Preprocessing
-		requirements += (number_vertices + 1) * 2 * sizeof(index_t);
+		update_requirements += (number_vertices + 1) * 2 * sizeof(index_t);
 	}
+
+	//// Calculate CSR Requirements
+	//csr_requirements = (sizeof(vertex_t) * number_vertices) +		// offset
+	//						(sizeof(vertex_t) * number_edges) +				// adjacency
+	//						(sizeof(vertex_t) * number_vertices) +			// d_neighbours
+	//						(sizeof(vertex_t) * (number_vertices + 1)); 	// d_block_requirements
+
+
+	requirements = (update_requirements > csr_requirements) ? update_requirements : csr_requirements;
+	//printf("Update Requirements: %u MB | CSR Requirements: %u MB\n", update_requirements / (1024*1024), csr_requirements / (1024 * 1024));
 	return requirements;
 }
 
-//#define ESTIMATE_MEMORY
+#define ESTIMATE_MEMORY
 
 //------------------------------------------------------------------------------
 //
@@ -91,22 +104,27 @@ void MemoryManager::estimateStorageRequirements(const std::shared_ptr<Config>& c
 	}
 
 #ifdef ESTIMATE_MEMORY
-	uint32_t additional_space_requirements = estimateAdditionalMemoryRequirements<EdgeDataType>(config, number_vertices);
+	uint64_t additional_space_requirements = estimateAdditionalMemoryRequirements<EdgeDataType>(config, number_vertices, number_edges);
 	float page_flux_factor = 1.5f;
-	uint32_t page_estimation_per_vertex = (ceil(static_cast<float>(number_edges) / static_cast<float>(number_vertices * edges_per_page)) * number_vertices) * page_flux_factor;
-	printf("Page Estimation per vertex: %u %u %u %u\n", page_estimation_per_vertex, number_edges, number_vertices, edges_per_page);
-	uint64_t size_estimation = mem_offset + 
-		sizeof(VertexData) * number_vertices +
-		page_estimation_per_vertex * page_size + 
-		(config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2) + 
-		config->testruns_.at(config->testrun_index_)->params->stacksize_ + 
+	uint64_t page_estimation_per_vertex = (ceil(static_cast<float>(number_edges) / static_cast<float>(number_vertices * edges_per_page)) * number_vertices) * page_flux_factor;
+	//printf("Page Estimation per vertex: %u %u %u %u\n", page_estimation_per_vertex, number_edges, number_vertices, edges_per_page);
+	uint64_t size_estimation = static_cast<uint64_t>(mem_offset) + 
+		static_cast<uint64_t>(sizeof(VertexData) * number_vertices) +
+		static_cast<uint64_t>(page_estimation_per_vertex * page_size) +
+		static_cast<uint64_t>((config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2)) +
+		static_cast<uint64_t>(config->testruns_.at(config->testrun_index_)->params->stacksize_) +
 		additional_space_requirements; 
 	total_memory = size_estimation;
 
-	printf("Size Estimation : %u MB\n", size_estimation / (1024 * 1024));
+	printf("Size Estimation : %lu MB  ---  Pages: %lu MB | Vertices: %lu MB | Helper: %lu MB | AdditionalSpace: %lu MB\n", 
+		size_estimation / (1024 * 1024),
+		static_cast<uint64_t>(page_estimation_per_vertex * page_size) / (1024 * 1024),
+		static_cast<uint64_t>(sizeof(VertexData) * number_vertices) / (1024*1024),
+		(static_cast<uint64_t>((config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2)) +
+		static_cast<uint64_t>(config->testruns_.at(config->testrun_index_)->params->stacksize_)) / (1024*1024),
+		additional_space_requirements / (1024*1024));
 	
 #endif
-
 
 	// Allocate memory
 	if (d_memory == nullptr)
@@ -124,14 +142,6 @@ void MemoryManager::estimateStorageRequirements(const std::shared_ptr<Config>& c
 
 	start_index = static_cast<uint64_t>((total_memory - (config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2) - config->testruns_.at(config->testrun_index_)->params->stacksize_ - mem_offset) / page_size) - 1;
 }
-template void MemoryManager::estimateStorageRequirements<VertexData, EdgeData>(const std::shared_ptr<Config>& config);
-template void MemoryManager::estimateStorageRequirements<VertexData, EdgeDataMatrix>(const std::shared_ptr<Config>& config);
-template void MemoryManager::estimateStorageRequirements<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config);
-template void MemoryManager::estimateStorageRequirements<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config);
-template void MemoryManager::estimateStorageRequirements<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::estimateStorageRequirements<VertexData, EdgeDataMatrixSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::estimateStorageRequirements<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::estimateStorageRequirements<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //
@@ -241,114 +251,4 @@ void MemoryManager::printEssentials(const std::string& text)
   std::cout << "PageQueue Fill-Level:   " << static_cast<int>(100 * (static_cast<float>(d_page_queue.count_) / d_page_queue.size_)) << " %" << std::endl;
   std::cout << "VertexQueue Fill-Level: " << static_cast<int>(100 * (static_cast<float>(d_vertex_queue.count_) / d_vertex_queue.size_)) << " %" << std::endl;
   std::cout << std::endl;
-}
-
-//------------------------------------------------------------------------------
-//
-CSRData::CSRData(const std::unique_ptr<GraphParser>& graph_parser,
-                 std::unique_ptr<MemoryManager>& memory_manager,
-                unsigned int vertex_offset):
-  scoped_mem_access_counter{memory_manager.get(), sizeof(vertex_t) * (
-                                                  graph_parser->getAdjacency().size() +
-                                                  graph_parser->getOffset().size() +
-                                                  (4 * graph_parser->getNumberOfVertices()))}
-{
-  TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), vertex_offset + graph_parser->getNumberOfVertices(), sizeof(VertexData));
-
-  d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getOffset().size());
-  d_adjacency = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getAdjacency().size());
-  if (graph_parser->isGraphMatrix())
-  {
-    d_matrix_values = temp_memory_dispenser.getTemporaryMemory<matrix_t>(graph_parser->getMatrixValues().size());
-  }
- 
-  d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getNumberOfVertices());
-  d_capacity = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getNumberOfVertices());
-  d_block_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getNumberOfVertices());
-  d_mem_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getNumberOfVertices());
-
-  // Copy adjacency/offset list to device
-  HANDLE_ERROR(cudaMemcpy(d_adjacency, graph_parser->getAdjacency().data(),
-                          sizeof(vertex_t) * graph_parser->getAdjacency().size(),
-                          cudaMemcpyHostToDevice));
-  HANDLE_ERROR(cudaMemcpy(d_offset, graph_parser->getOffset().data(),
-                          sizeof(vertex_t) * graph_parser->getOffset().size(),
-                          cudaMemcpyHostToDevice));
-  if (graph_parser->isGraphMatrix())
-  {
-    HANDLE_ERROR(cudaMemcpy(d_matrix_values, graph_parser->getMatrixValues().data(),
-                            sizeof(matrix_t) * graph_parser->getMatrixValues().size(),
-                            cudaMemcpyHostToDevice));
-  }
-}
-
-
-//------------------------------------------------------------------------------
-//
-CSRData::CSRData(vertex_t* offset, vertex_t* adjacency,
-	std::unique_ptr<MemoryManager>& memory_manager,
-	unsigned int number_vertices, unsigned int number_edges) :
-	scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (
-		number_edges +
-		number_vertices + 1 +
-		(4 * number_vertices)) }
-{
-	TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), number_vertices, sizeof(VertexData));
-
-	d_offset = offset;
-	d_adjacency = adjacency;
-	d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
-	d_capacity = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
-	d_block_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
-	d_mem_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
-}
-
-//------------------------------------------------------------------------------
-//
-CSRData::CSRData(std::unique_ptr<MemoryManager>& memory_manager, unsigned int number_rows, unsigned int vertex_offset):
-  scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (
-    number_rows + 1 +
-    (4 * number_rows)) }
-{
-  TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), vertex_offset + number_rows, sizeof(VertexData));
-  d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows + 1);
-  d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows);
-  d_capacity = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows);
-  d_block_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows);
-  d_mem_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows);
-
-  HANDLE_ERROR(cudaMemset(d_offset,
-                          0,
-                          sizeof(vertex_t) * (number_rows + 1)));
-}
-
-//------------------------------------------------------------------------------
-//
-aimGraphCSR::aimGraphCSR(std::unique_ptr<MemoryManager>& memory_manager):
-number_vertices{memory_manager->next_free_vertex_index},
-scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (2 * memory_manager->next_free_vertex_index) }
-{
-  TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), memory_manager->next_free_vertex_index, sizeof(VertexData));
-
-  d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(memory_manager->next_free_vertex_index);
-  d_mem_requirement = temp_memory_dispenser.getTemporaryMemory<vertex_t>(memory_manager->next_free_vertex_index);
-  d_adjacency = temp_memory_dispenser.getTemporaryMemory<vertex_t>(0);
-    
-  h_offset = (vertex_t*) malloc(sizeof(vertex_t) * memory_manager->next_free_vertex_index);
-}
-
-//------------------------------------------------------------------------------
-//
-aimGraphCSR::aimGraphCSR(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices) :
-  number_vertices{ number_vertices },
-  scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (2 * number_vertices) }
-{
-  TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), vertex_offset + number_vertices, sizeof(VertexData));
-
-  d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
-  d_mem_requirement = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
-  d_adjacency = temp_memory_dispenser.getTemporaryMemory<vertex_t>(0);
-  d_matrix_values = temp_memory_dispenser.getTemporaryMemory<matrix_t>(0);
-
-  h_offset = (vertex_t*)malloc(sizeof(vertex_t) * memory_manager->next_free_vertex_index);
 }

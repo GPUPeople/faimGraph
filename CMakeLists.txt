@@ -82,15 +82,24 @@ SET(FAIMGRAPHHEADERS
 	include/dCSR.h 
 	include/Definitions.h 
 	include/EdgeUpdate.h 
+	include/EdgeInsertion.cuh 
+	include/EdgeDeletion.cuh 
+	include/EdgeQuery.cuh 
+	include/EdgeUtility.cuh 
+	include/EdgeUpdateConcurrent.cuh 
 	include/faimGraph.h 
+	include/faimGraph.cuh 
 	include/GraphParser.h 
 	include/MemoryLayout.h 
 	include/MemoryManager.h 
+	include/MemoryManager.cuh 
 	include/Queue.h 
 	include/SpMM.h 
 	include/SpMV.h 
 	include/Utility.h 
 	include/Vector.h 
+	include/VertexInsertion.cuh 
+	include/VertexDeletion.cuh 
 	include/VertexMapper.h 
 	include/VertexUpdate.h 
 )
@@ -102,30 +111,14 @@ cuda_add_library(faimgraph
           			src/ConfigurationParser.cpp
 					src/CSVWriter.cpp
 					src/MemoryManager.cpp
-					src/MemoryManager.cu
 					src/GraphParser.cpp
 					src/Utility.cpp
-					src/Utility.cu
 					src/faimGraph.cpp
-					src/faimGraph.cu
 					src/EdgeUpdate.cpp
-					src/EdgeUpdate.cu
-					src/EdgeQuery.cu
-					src/EdgeInsertion.cu
-					src/EdgeDeletion.cu
-					src/EdgeUtility.cu
-					src/VertexInsertion.cu
-					src/VertexDeletion.cu
-					src/VertexUtility.cu
 					src/VertexUpdate.cpp
 					src/SpMV.cu
 					src/SpMM.cu
-					src/algorithms/StaticTriangleCounting.cu
-					src/algorithms/STC.cu
-					src/algorithms/PageRank.cu
-					src/algorithms/ClusteringCoefficients.cu
-					src/algorithms/BetweennessCentrality.cu
-					src/algorithms/ConnectedComponents.cu
+					src/Instantiations.cu
 					${FAIMGRAPHHEADERS}
         )
 
@@ -133,37 +126,39 @@ cuda_add_executable(mainfaimGraph
           src/main.cpp
            )
 
-cuda_add_executable(reInitTCfaimGraph 
+cuda_add_executable(reInitTC 
           src/tests/reInitTC.cpp
            )
 
-cuda_add_executable(STCfaimGraph 
-          src/algorithms/StaticTriangleCounting.cpp
+cuda_add_executable(STC 
+          src/algorithms/STC.cpp
 		  include/algorithms/STC.h
-		  include/algorithms/StaticTriangleCounting.h
+		  include/algorithms/STC.cuh
            )
 
-cuda_add_executable(ClusteringCoefficients 
+cuda_add_executable(CCoeff
           src/algorithms/ClusteringCoefficients.cpp
 		  include/algorithms/ClusteringCoefficients.h 
+		  include/algorithms/ClusteringCoefficients.cuh 
            )
 
-cuda_add_executable(ConnectedComponents 
+cuda_add_executable(CComp
           src/algorithms/ConnectedComponents.cpp
 		  include/algorithms/ConnectedComponents.h 
            )
 
-cuda_add_executable(BetweennessCentrality	 
+cuda_add_executable(BC 
           src/algorithms/BetweennessCentrality.cpp
 		  include/algorithms/BetweennessCentrality.h 
            )
 
-cuda_add_executable(PageRankfaimGraph 
-          src/algorithms/PageRank.cpp
+cuda_add_executable(PR
+          src/algorithms/PR.cpp
 		  include/algorithms/PageRank.h 
+		  include/algorithms/PageRank.cuh 
            )
 
-cuda_add_executable(continuousTCfaimGraph 
+cuda_add_executable(continuousTC
           src/tests/ContinuousTC.cpp
            )
 
@@ -171,28 +166,28 @@ cuda_add_executable(dynamicVerticesMain
           src/tests/dynamicVerticesMain.cpp
            )
 
-cuda_add_executable(concurrentTCfaimGraph 
+cuda_add_executable(concurrentTC
           src/tests/concurrentTC.cpp
            )
 
-cuda_add_executable(queryTCfaimGraph 
+cuda_add_executable(queryTC
           src/tests/queryTC.cpp
            )
 
-cuda_add_executable(spmvfaimGraph 
+cuda_add_executable(spmv 
           src/tests/SpMV.cpp
            )
 
 
 TARGET_LINK_LIBRARIES(mainfaimGraph faimgraph ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(STCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(ClusteringCoefficients faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(ConnectedComponents faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(BetweennessCentrality faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(PageRankfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(continuousTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(STC faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(CCoeff faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(CComp faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(BC faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(PR faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(continuousTC faimgraph  ${CUDA_cudart_static_LIBRARY})
 TARGET_LINK_LIBRARIES(dynamicVerticesMain faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(concurrentTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(queryTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(spmvfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
-TARGET_LINK_LIBRARIES(reInitTCfaimGraph faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(concurrentTC faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(queryTC faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(spmv faimgraph  ${CUDA_cudart_static_LIBRARY})
+TARGET_LINK_LIBRARIES(reInitTC faimgraph  ${CUDA_cudart_static_LIBRARY})

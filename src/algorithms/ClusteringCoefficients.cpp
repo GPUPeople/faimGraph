@@ -30,10 +30,10 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./STCfaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./CCoeff <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## faimGraph Static Triangle Counting ##########" << std::endl;
+  std::cout << "########## faimGraph Clustering Coefficients ##########" << std::endl;
   ConfigurationParser config_parser(argv[1]);
   std::cout << "Parse Configuration File" << std::endl;
   auto config = config_parser.parseConfiguration();

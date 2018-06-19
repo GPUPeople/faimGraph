@@ -23,8 +23,26 @@ static void HandleError( cudaError_t err,
 #define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
 
 void queryAndPrintDeviceProperties();
-void start_clock(cudaEvent_t &start, cudaEvent_t &end);
-float end_clock(cudaEvent_t &start, cudaEvent_t &end);
+//------------------------------------------------------------------------------
+void inline start_clock(cudaEvent_t &start, cudaEvent_t &end)
+{
+    HANDLE_ERROR(cudaEventCreate(&start));
+    HANDLE_ERROR(cudaEventCreate(&end));
+    HANDLE_ERROR(cudaEventRecord(start,0));
+}
+//------------------------------------------------------------------------------
+float inline end_clock(cudaEvent_t &start, cudaEvent_t &end)
+{
+    float time;
+    HANDLE_ERROR(cudaEventRecord(end,0));
+    HANDLE_ERROR(cudaEventSynchronize(end));
+    HANDLE_ERROR(cudaEventElapsedTime(&time,start,end));
+    HANDLE_ERROR(cudaEventDestroy(start));
+    HANDLE_ERROR(cudaEventDestroy(end));
+
+    // Returns ms
+    return time;
+}
 
 #ifdef __INTELLISENSE__
 void __syncthreads();
@@ -371,14 +389,14 @@ __forceinline__ __device__ void setupVertex(VertexDataSemantic& vertex, VertexUp
 //
 
 template <typename EdgeDataType>
-__forceinline__ __device__ void pointerHandlingSetup(EdgeDataType*& adjacency_list, memory_t* memory, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetup(EdgeDataType*& adjacency_list, memory_t* memory, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *((index_t*)adjacency_list) = ++block_index;
   adjacency_list = pageAccess<EdgeDataType>(memory, block_index, page_size, start_index);
 }
 
 template <typename EdgeDataType>
-__forceinline__ __device__ void pointerHandlingSetupDoubleLinked(EdgeDataType*& adjacency_list, memory_t* memory, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetupDoubleLinked(EdgeDataType*& adjacency_list, memory_t* memory, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *(((index_t*)adjacency_list) + 1) = block_index++;
   *((index_t*)adjacency_list) = block_index;
@@ -386,14 +404,14 @@ __forceinline__ __device__ void pointerHandlingSetupDoubleLinked(EdgeDataType*& 
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingSetup<EdgeDataWeightSOA>(EdgeDataWeightSOA*& adjacency_list, memory_t* edgedata_start_index, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetup<EdgeDataWeightSOA>(EdgeDataWeightSOA*& adjacency_list, memory_t* edgedata_start_index, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *((index_t*)((adjacency_list) + (edges_per_page * SOA_OFFSET_WEIGHT))) = ++block_index;
   adjacency_list = pageAccess<EdgeDataWeightSOA>(edgedata_start_index, block_index, page_size, start_index);
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataWeightSOA>(EdgeDataWeightSOA*& adjacency_list, memory_t* edgedata_start_index, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataWeightSOA>(EdgeDataWeightSOA*& adjacency_list, memory_t* edgedata_start_index, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *(((index_t*)((adjacency_list)+(edges_per_page * SOA_OFFSET_WEIGHT))) + 1) = block_index++;
   *((index_t*)((adjacency_list)+(edges_per_page * SOA_OFFSET_WEIGHT))) = block_index;
@@ -401,14 +419,14 @@ __forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataWeightS
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingSetup<EdgeDataMatrixSOA>(EdgeDataMatrixSOA*& adjacency_list, memory_t* edgedata_start_index, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetup<EdgeDataMatrixSOA>(EdgeDataMatrixSOA*& adjacency_list, memory_t* edgedata_start_index, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *((index_t*)((adjacency_list)+(edges_per_page * SOA_OFFSET_MATRIX))) = ++block_index;
   adjacency_list = pageAccess<EdgeDataMatrixSOA>(edgedata_start_index, block_index, page_size, start_index);
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataMatrixSOA>(EdgeDataMatrixSOA*& adjacency_list, memory_t* edgedata_start_index, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataMatrixSOA>(EdgeDataMatrixSOA*& adjacency_list, memory_t* edgedata_start_index, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *(((index_t*)((adjacency_list)+(edges_per_page * SOA_OFFSET_MATRIX))) + 1) = block_index++;
   *((index_t*)((adjacency_list)+(edges_per_page * SOA_OFFSET_MATRIX))) = block_index;
@@ -416,14 +434,14 @@ __forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataMatrixS
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingSetup<EdgeDataSemanticSOA>(EdgeDataSemanticSOA*& adjacency_list, memory_t* edgedata_start_index, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetup<EdgeDataSemanticSOA>(EdgeDataSemanticSOA*& adjacency_list, memory_t* edgedata_start_index, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *((index_t*)((adjacency_list)+ (edges_per_page * SOA_OFFSET_TIMESTAMP2))) = ++block_index;
   adjacency_list = pageAccess<EdgeDataSemanticSOA>(edgedata_start_index, block_index, page_size, start_index);
 }
 
 template <>
-__forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataSemanticSOA>(EdgeDataSemanticSOA*& adjacency_list, memory_t* edgedata_start_index, int& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
+__forceinline__ __device__ void pointerHandlingSetupDoubleLinked<EdgeDataSemanticSOA>(EdgeDataSemanticSOA*& adjacency_list, memory_t* edgedata_start_index, vertex_t& block_index, int page_size, vertex_t edges_per_page, uint64_t start_index)
 {
   *(((index_t*)((adjacency_list)+(edges_per_page * SOA_OFFSET_TIMESTAMP2))) + 1) = block_index++;
   *((index_t*)((adjacency_list)+(edges_per_page * SOA_OFFSET_TIMESTAMP2))) = block_index;
@@ -609,7 +627,7 @@ public:
     }
   }
 
-  __forceinline__ __device__ void adjacencySetup(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, int offset_index, int& block_index)
+  __forceinline__ __device__ void adjacencySetup(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, int offset_index, vertex_t& block_index)
   {
     setAdjacency(iterator, adjacency, offset_index + loop_index, edges_per_page);
     ++iterator;
@@ -619,7 +637,7 @@ public:
     }
   }
 
-  __forceinline__ __device__ void adjacencySetup(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, matrix_t* matrix_values, int offset_index, int& block_index)
+  __forceinline__ __device__ void adjacencySetup(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, matrix_t* matrix_values, int offset_index, vertex_t& block_index)
   {
     setAdjacency(iterator, adjacency, matrix_values, offset_index + loop_index, edges_per_page);
     ++iterator;
@@ -629,7 +647,7 @@ public:
     }
   }
 
-  __forceinline__ __device__ void adjacencySetupDoubleLinked(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, int offset_index, int& block_index)
+  __forceinline__ __device__ void adjacencySetupDoubleLinked(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, int offset_index, vertex_t& block_index)
   {
     setAdjacency(iterator, adjacency, offset_index + loop_index, edges_per_page);
     ++iterator;
@@ -639,7 +657,7 @@ public:
     }
   }
 
-  __forceinline__ __device__ void adjacencySetupDoubleLinked(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, matrix_t* matrix_values, int offset_index, int& block_index)
+  __forceinline__ __device__ void adjacencySetupDoubleLinked(int& loop_index, vertex_t& edges_per_page, memory_t*& memory, int& page_size, uint64_t& start_index, vertex_t* adjacency, matrix_t* matrix_values, int offset_index, vertex_t& block_index)
   {
     setAdjacency(iterator, adjacency, matrix_values, offset_index + loop_index, edges_per_page);
     ++iterator;

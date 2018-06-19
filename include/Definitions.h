@@ -40,6 +40,7 @@ using MatrixList_t = std::vector<matrix_t>;
 #define SINGLE_THREAD_MULTI (threadID == 0)
 #define SINGLE_THREAD_INDEX (threadID == edges_per_block)
 #define SINGLE_THREAD_INDEX_WARPID (threadID == edges_per_block[warpID])
+#define LINEAR_THREAD_ID (threadIdx.x + blockIdx.x*blockDim.x)
 
 //------------------------------------------------------------------------------
 // Memory layout definitions

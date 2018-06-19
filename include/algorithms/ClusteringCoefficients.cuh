@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
-// ClusteringCoefficients.cu
+// ClusteringCoefficients.cuh
 //
 // faimGraph
 //
 //------------------------------------------------------------------------------
 //
+#pragma once
 #include <iostream>
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
@@ -13,31 +14,36 @@
 #include "MemoryManager.h"
 #include "EdgeUpdate.h"
 
-//------------------------------------------------------------------------------
-// Device funtionality
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-//
-template <typename VertexDataType, typename EdgeDataType>
-__global__ void d_clusteringCoefficients(MemoryManager* memory_manager,
-                                        memory_t* memory,
-                                        uint32_t* triangles,
-                                        float* clustering_coefficients,
-                                        int number_vertices,
-                                        int page_size)
+
+namespace faimGraphCCoeff
 {
-  int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  if (tid >= number_vertices)
-    return;
+	//------------------------------------------------------------------------------
+	// Device funtionality
+	//------------------------------------------------------------------------------
+	//
+	//------------------------------------------------------------------------------
+	//
+	template <typename VertexDataType, typename EdgeDataType>
+	__global__ void d_clusteringCoefficients(MemoryManager* memory_manager,
+											memory_t* memory,
+											uint32_t* triangles,
+											float* clustering_coefficients,
+											int number_vertices,
+											int page_size)
+	{
+		int tid = LINEAR_THREAD_ID;
+		if (tid >= number_vertices)
+			return;
 
-  VertexDataType* vertices = (VertexDataType*)memory;
-  VertexDataType vertex = vertices[tid];
+		VertexDataType* vertices = (VertexDataType*)memory;
+		VertexDataType vertex = vertices[tid];
 
-  clustering_coefficients[tid] = static_cast<float>(triangles[tid]) / (vertex.neighbours * (vertex.neighbours - 1));
+		clustering_coefficients[tid] = static_cast<float>(triangles[tid]) / (vertex.neighbours * (vertex.neighbours - 1));
 
-  return;
+		return;
+	}
 }
+
 
 
 //------------------------------------------------------------------------------
@@ -58,7 +64,7 @@ float ClusteringCoefficients<VertexDataType, EdgeDataType>::computeClusteringCoe
   stc->StaticTriangleCounting(memory_manager, false);
 
   // Compute clustering coefficients
-  d_clusteringCoefficients<VertexDataType, EdgeDataType> << <grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
+  faimGraphCCoeff::d_clusteringCoefficients<VertexDataType, EdgeDataType> << <grid_size, block_size >> > ((MemoryManager*)memory_manager->d_memory,
                                                                                           memory_manager->d_data,
                                                                                           stc->d_triangles,
                                                                                           d_clustering_coefficients,
@@ -87,10 +93,3 @@ float ClusteringCoefficients<VertexDataType, EdgeDataType>::computeClusteringCoe
   
   return clustering_coefficient;
 }
-
-template float ClusteringCoefficients<VertexData, EdgeData>::computeClusteringCoefficients(std::unique_ptr<MemoryManager>& memory_manager, bool global_CC_count);
-template float ClusteringCoefficients<VertexDataWeight, EdgeDataWeight>::computeClusteringCoefficients(std::unique_ptr<MemoryManager>& memory_manager, bool global_CC_count);
-template float ClusteringCoefficients<VertexDataSemantic, EdgeDataSemantic>::computeClusteringCoefficients(std::unique_ptr<MemoryManager>& memory_manager, bool global_CC_count);
-template float ClusteringCoefficients<VertexData, EdgeDataSOA>::computeClusteringCoefficients(std::unique_ptr<MemoryManager>& memory_manager, bool global_CC_count);
-template float ClusteringCoefficients<VertexDataWeight, EdgeDataWeightSOA>::computeClusteringCoefficients(std::unique_ptr<MemoryManager>& memory_manager, bool global_CC_count);
-template float ClusteringCoefficients<VertexDataSemantic, EdgeDataSemanticSOA>::computeClusteringCoefficients(std::unique_ptr<MemoryManager>& memory_manager, bool global_CC_count);

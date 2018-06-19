@@ -178,7 +178,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 				faimGraph->initializeMemory(parser);
 				time_elapsed_init += end_clock(ce_start, ce_stop);
 
-				printCUDAStats("After Init");
+				//printCUDAStats("After Init");
 
 				for (int j = 0; j < testrun->params->update_rounds_; ++j)
 				{
@@ -186,12 +186,15 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
 					/*faimGraph->config->device_mem_size_ *= 1.10;*/
 
 					start_clock(ce_start, ce_stop);
-					auto return_csr = faimGraph->reinitializeFaimGraph(1.0f);
-					time_elapsed_reinit += end_clock(ce_start, ce_stop);
+					auto return_csr = faimGraph->reinitializeFaimGraph(1.05f);
+					float timing = end_clock(ce_start, ce_stop);
+					time_elapsed_reinit += timing;
 
-					printCUDAStats("After Re-Init");
+					printf("New Size: %lu MB - %f ms\n", (faimGraph->memory_manager->total_memory) / (1024*1024), timing);
 
-					verification(faimGraph, "Verify ReInitialization Round", parser, testrun, i, 0, duplicate_check);
+					//printCUDAStats("After Re-Init");
+
+					//verification(faimGraph, "Verify ReInitialization Round", parser, testrun, i, 0, duplicate_check);
 				}
 
 				// Let's retrieve a fresh graph

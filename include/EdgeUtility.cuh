@@ -5,7 +5,7 @@
 //
 //------------------------------------------------------------------------------
 //
-
+#pragma once
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -712,14 +712,6 @@ std::unique_ptr<EdgeUpdatePreProcessing<UpdateDataType>> EdgeUpdateManager<Verte
   return std::move(preprocessed);
 }
 
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeData, EdgeDataUpdate>::edgeUpdatePreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeight, EdgeDataWeightUpdate>::edgeUpdatePreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::edgeUpdatePreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeDataSOA, EdgeDataUpdate>::edgeUpdatePreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::edgeUpdatePreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::edgeUpdatePreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType>
@@ -750,15 +742,6 @@ std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<Vertex
 
   return std::move(preprocessed);
 }
-
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexData, EdgeData>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexDataWeight, EdgeDataWeight>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexDataSemantic, EdgeDataSemantic>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexData, EdgeDataSOA>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexDataWeight, EdgeDataWeightSOA>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-template std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>> EdgeQueryManager<VertexDataSemantic, EdgeDataSemanticSOA>::edgeQueryPreprocessing(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config);
-
-
 
 //------------------------------------------------------------------------------
 //
@@ -820,14 +803,6 @@ void EdgeUpdateManager<VertexDataType, EdgeDataType, UpdateDataType>::edgeUpdate
 
   return;
 }
-
-template void EdgeUpdateManager<VertexData, EdgeData, EdgeDataUpdate>::edgeUpdateDuplicateChecking(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config, const std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>>& preprocessed);
-template void EdgeUpdateManager<VertexDataWeight, EdgeDataWeight, EdgeDataWeightUpdate>::edgeUpdateDuplicateChecking(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config, const std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataWeightUpdate>>& preprocessed);
-template void EdgeUpdateManager<VertexDataSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::edgeUpdateDuplicateChecking(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config, const std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataSemanticUpdate>>& preprocessed);
-template void EdgeUpdateManager<VertexData, EdgeDataSOA, EdgeDataUpdate>::edgeUpdateDuplicateChecking(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config, const std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataUpdate>>& preprocessed);
-template void EdgeUpdateManager<VertexDataWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::edgeUpdateDuplicateChecking(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config, const std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataWeightUpdate>>& preprocessed);
-template void EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::edgeUpdateDuplicateChecking(std::unique_ptr<MemoryManager>& memory_manager, const std::shared_ptr<Config>& config, const std::unique_ptr<EdgeUpdatePreProcessing<EdgeDataSemanticUpdate>>& preprocessed);
-
 
 //------------------------------------------------------------------------------
 //
@@ -912,13 +887,6 @@ std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataTyp
   return std::move(edge_update);
 }
 
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeData, EdgeDataUpdate>::generateEdgeUpdates (const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeight, EdgeDataWeightUpdate>::generateEdgeUpdates (const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::generateEdgeUpdates (const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeDataSOA, EdgeDataUpdate>::generateEdgeUpdates (const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::generateEdgeUpdates (const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::generateEdgeUpdates (const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType, typename UpdateDataType>
@@ -971,13 +939,6 @@ std::unique_ptr<EdgeUpdateBatch<UpdateDataType>> EdgeUpdateManager<VertexDataTyp
   return std::move(edge_update);
 }
 
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeData, EdgeDataUpdate>::generateEdgeUpdatesConcurrent <VertexUpdate>(std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeData, EdgeDataUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeight, EdgeDataWeightUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateWeight>(std::unique_ptr<faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeight, EdgeDataWeightUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateSemantic>(std::unique_ptr<faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemantic, EdgeDataSemanticUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataUpdate>> EdgeUpdateManager<VertexData, EdgeDataSOA, EdgeDataUpdate>::generateEdgeUpdatesConcurrent <VertexUpdate> (std::unique_ptr<faimGraph<VertexData, VertexUpdate, EdgeDataSOA, EdgeDataUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataWeightUpdate>> EdgeUpdateManager<VertexDataWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateWeight>(std::unique_ptr<faimGraph<VertexDataWeight, VertexUpdateWeight, EdgeDataWeightSOA, EdgeDataWeightUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-template std::unique_ptr<EdgeUpdateBatch<EdgeDataSemanticUpdate>> EdgeUpdateManager<VertexDataSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>::generateEdgeUpdatesConcurrent <VertexUpdateSemantic>(std::unique_ptr<faimGraph<VertexDataSemantic, VertexUpdateSemantic, EdgeDataSemanticSOA, EdgeDataSemanticUpdate>>& faimGraph, const std::unique_ptr<MemoryManager>& memory_manager, vertex_t batch_size, unsigned int seed, unsigned int range, unsigned int offset);
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType>
@@ -992,13 +953,6 @@ void MemoryManager::compaction(const std::shared_ptr<Config>& config)
                                                                               page_size);
   return;
 }
-
-template void MemoryManager::compaction<VertexData, EdgeData>(const std::shared_ptr<Config>& config);
-template void MemoryManager::compaction<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config);
-template void MemoryManager::compaction<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config);
-template void MemoryManager::compaction<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::compaction<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::compaction<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //
@@ -1019,13 +973,6 @@ void MemoryManager::sortAdjacency(const std::shared_ptr<Config>& config, SortOrd
   return;
 }
 
-template void MemoryManager::sortAdjacency<VertexData, EdgeData>(const std::shared_ptr<Config>& config, SortOrder sort_order);
-template void MemoryManager::sortAdjacency<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config, SortOrder sort_order);
-template void MemoryManager::sortAdjacency<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config, SortOrder sort_order);
-template void MemoryManager::sortAdjacency<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config, SortOrder sort_order);
-template void MemoryManager::sortAdjacency<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config, SortOrder sort_order);
-template void MemoryManager::sortAdjacency<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config, SortOrder sort_order);
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType>
@@ -1043,13 +990,6 @@ void MemoryManager::testUndirectedness(const std::shared_ptr<Config>& config)
   return;
 }
 
-template void MemoryManager::testUndirectedness<VertexData, EdgeData>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testUndirectedness<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testUndirectedness<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testUndirectedness<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testUndirectedness<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testUndirectedness<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType>
@@ -1066,13 +1006,6 @@ void MemoryManager::testSelfLoops(const std::shared_ptr<Config>& config)
   cudaDeviceSynchronize();  
   return;
 }
-
-template void MemoryManager::testSelfLoops<VertexData, EdgeData>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testSelfLoops<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testSelfLoops<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testSelfLoops<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testSelfLoops<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testSelfLoops<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);
 
 //------------------------------------------------------------------------------
 //
@@ -1092,15 +1025,6 @@ void MemoryManager::resetAllocationStatus(const std::shared_ptr<Config>& config,
   return;
 }
 
-template void MemoryManager::resetAllocationStatus<VertexData, EdgeData>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-template void MemoryManager::resetAllocationStatus<VertexData, EdgeDataMatrix>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-template void MemoryManager::resetAllocationStatus<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-template void MemoryManager::resetAllocationStatus<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-template void MemoryManager::resetAllocationStatus<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-template void MemoryManager::resetAllocationStatus<VertexData, EdgeDataMatrixSOA>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-template void MemoryManager::resetAllocationStatus<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-template void MemoryManager::resetAllocationStatus<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config, vertex_t number_vertices, vertex_t vertex_offset);
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType, typename EdgeDataType>
@@ -1117,10 +1041,3 @@ void MemoryManager::testDuplicates(const std::shared_ptr<Config>& config)
   cudaDeviceSynchronize();  
   return;
 }
-
-template void MemoryManager::testDuplicates<VertexData, EdgeData>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testDuplicates<VertexDataWeight, EdgeDataWeight>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testDuplicates<VertexDataSemantic, EdgeDataSemantic>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testDuplicates<VertexData, EdgeDataSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testDuplicates<VertexDataWeight, EdgeDataWeightSOA>(const std::shared_ptr<Config>& config);
-template void MemoryManager::testDuplicates<VertexDataSemantic, EdgeDataSemanticSOA>(const std::shared_ptr<Config>& config);

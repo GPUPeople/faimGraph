@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include  "StaticTriangleCounting.h"
+#include  "STC.h"
 
 template <typename VertexDataType, typename EdgeDataType>
 class ClusteringCoefficients

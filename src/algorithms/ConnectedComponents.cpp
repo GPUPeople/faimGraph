@@ -30,10 +30,10 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./PageRankaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./CComp <configuration-file>" << std::endl;
     return RET_ERROR;
   }
-  std::cout << "########## aimGraph PageRank ##########" << std::endl;
+  std::cout << "########## aimGraph Connected Components ##########" << std::endl;
   ConfigurationParser config_parser(argv[1]);
   std::cout << "Parse Configuration File" << std::endl;
   auto config = config_parser.parseConfiguration();

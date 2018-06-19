@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// PageRank.cpp
+// PR.cu
 //
 // faimGraph
 //
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./PageRankfaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./PR <configuration-file>" << std::endl;
     return RET_ERROR;
   }
   std::cout << "########## faimGraph PageRank ##########" << std::endl;

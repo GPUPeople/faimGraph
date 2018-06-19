@@ -5,7 +5,7 @@
 //
 //------------------------------------------------------------------------------
 //
-
+#pragma once
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -17,84 +17,87 @@
 #include "GraphParser.h"
 #include "ConfigurationParser.h"
 
-//############################################################################################################################################################
-// Device funtionality
-//############################################################################################################################################################
-
-//------------------------------------------------------------------------------
-//
-template <typename VertexDataType>
-__global__ void d_reportEdges(MemoryManager* memory_manager, memory_t* memory, vertex_t* neighbours)
+namespace faimGraphMemoryManager
 {
-  int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  if (tid >= memory_manager->next_free_vertex_index)
-    return;
-  
-  VertexDataType* vertices = (VertexDataType*)memory;
-  if (vertices[tid].host_identifier != DELETIONMARKER)
-    neighbours[tid] = vertices[tid].neighbours;
-  else
-    neighbours[tid] = 0;
+	//############################################################################################################################################################
+	// Device funtionality
+	//############################################################################################################################################################
 
-  return;
-}
+	//------------------------------------------------------------------------------
+	//
+	template <typename VertexDataType>
+	__global__ void d_reportEdges(MemoryManager* memory_manager, memory_t* memory, vertex_t* neighbours)
+	{
+	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+	if (tid >= memory_manager->next_free_vertex_index)
+		return;
+	
+	VertexDataType* vertices = (VertexDataType*)memory;
+	if (vertices[tid].host_identifier != DELETIONMARKER)
+		neighbours[tid] = vertices[tid].neighbours;
+	else
+		neighbours[tid] = 0;
 
-//------------------------------------------------------------------------------
-//
-template <typename VertexDataType>
-__global__ void d_reportEdges(MemoryManager* memory_manager, memory_t* memory, vertex_t* neighbours, vertex_t vertex_offset, vertex_t number_vertices)
-{
-  int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  if (tid >= number_vertices)
-    return;
+	return;
+	}
 
-  VertexDataType* vertices = (VertexDataType*)memory;
-  if (vertices[vertex_offset + tid].host_identifier != DELETIONMARKER)
-    neighbours[tid] = vertices[vertex_offset + tid].neighbours;
-  else
-    neighbours[tid] = 0;
+	//------------------------------------------------------------------------------
+	//
+	template <typename VertexDataType>
+	__global__ void d_reportEdges(MemoryManager* memory_manager, memory_t* memory, vertex_t* neighbours, vertex_t vertex_offset, vertex_t number_vertices)
+	{
+	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+	if (tid >= number_vertices)
+		return;
 
-  return;
-}
+	VertexDataType* vertices = (VertexDataType*)memory;
+	if (vertices[vertex_offset + tid].host_identifier != DELETIONMARKER)
+		neighbours[tid] = vertices[vertex_offset + tid].neighbours;
+	else
+		neighbours[tid] = 0;
 
-//------------------------------------------------------------------------------
-//
-template <typename VertexDataType>
-__global__ void d_reportPages(MemoryManager* memory_manager, memory_t* memory, vertex_t* pages)
-{
-  int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  if (tid >= memory_manager->next_free_vertex_index)
-    return;
+	return;
+	}
 
-  VertexDataType* vertices = (VertexDataType*)memory;
-  if (vertices[tid].host_identifier != DELETIONMARKER)
-    pages[tid] = vertices[tid].capacity / memory_manager->edges_per_page;
-  else
-    pages[tid] = 0;
+	//------------------------------------------------------------------------------
+	//
+	template <typename VertexDataType>
+	__global__ void d_reportPages(MemoryManager* memory_manager, memory_t* memory, vertex_t* pages)
+	{
+	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+	if (tid >= memory_manager->next_free_vertex_index)
+		return;
 
-  return;
-}
+	VertexDataType* vertices = (VertexDataType*)memory;
+	if (vertices[tid].host_identifier != DELETIONMARKER)
+		pages[tid] = vertices[tid].capacity / memory_manager->edges_per_page;
+	else
+		pages[tid] = 0;
 
-//------------------------------------------------------------------------------
-// accumulated_page_count is size + 1
-//
-__global__ void d_workBalanceCalculation(MemoryManager* memory_manager, vertex_t* accumulated_page_count, vertex_t page_count, vertex_t* vertex_indices, vertex_t* page_per_vertex_indices)
-{
-  int tid = threadIdx.x + blockIdx.x*blockDim.x;
-  if (tid >= memory_manager->next_free_vertex_index)
-    return;
+	return;
+	}
 
-  vertex_t offset = accumulated_page_count[tid];
-  vertex_t pages_per_vertex = accumulated_page_count[tid + 1] - offset;
+	//------------------------------------------------------------------------------
+	// accumulated_page_count is size + 1
+	//
+	__global__ void d_workBalanceCalculation(MemoryManager* memory_manager, vertex_t* accumulated_page_count, vertex_t page_count, vertex_t* vertex_indices, vertex_t* page_per_vertex_indices)
+	{
+	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+	if (tid >= memory_manager->next_free_vertex_index)
+		return;
+
+	vertex_t offset = accumulated_page_count[tid];
+	vertex_t pages_per_vertex = accumulated_page_count[tid + 1] - offset;
 
 
-  for(int i = 0; i < pages_per_vertex; ++i)
-  {
-    vertex_indices[offset + i] = tid;
-    page_per_vertex_indices[offset + i] = i;
-  }
+	for(int i = 0; i < pages_per_vertex; ++i)
+	{
+		vertex_indices[offset + i] = tid;
+		page_per_vertex_indices[offset + i] = i;
+	}
 
-  return;
+	return;
+	}
 }
 
 
@@ -132,7 +135,7 @@ size_t MemoryManager::numberEdgesInMemory(vertex_t* d_neighbours_count, bool ret
   int block_size = 256;
   int grid_size = (next_free_vertex_index / block_size) + 1;
 
-  d_reportEdges<VertexDataType> <<< grid_size, block_size >>> ((MemoryManager*)d_memory,d_data, d_neighbours_count);
+  faimGraphMemoryManager::d_reportEdges<VertexDataType> <<< grid_size, block_size >>> ((MemoryManager*)d_memory,d_data, d_neighbours_count);
 
   if (return_count)
   {
@@ -150,10 +153,6 @@ size_t MemoryManager::numberEdgesInMemory(vertex_t* d_neighbours_count, bool ret
   return 0;
 }
 
-template size_t MemoryManager::numberEdgesInMemory<VertexData>(vertex_t* d_neighbours_count, bool return_count);
-template size_t MemoryManager::numberEdgesInMemory<VertexDataWeight>(vertex_t* d_neighbours_count, bool return_count);
-template size_t MemoryManager::numberEdgesInMemory<VertexDataSemantic>(vertex_t* d_neighbours_count, bool return_count);
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType>
@@ -162,7 +161,7 @@ size_t MemoryManager::numberEdgesInMemory(vertex_t* d_neighbours_count, vertex_t
   int block_size = 256;
   int grid_size = (number_vertices / block_size) + 1;
 
-  d_reportEdges<VertexDataType> << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_data, d_neighbours_count, vertex_offset, number_vertices);
+  faimGraphMemoryManager::d_reportEdges<VertexDataType> << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_data, d_neighbours_count, vertex_offset, number_vertices);
 
   if (return_count)
   {
@@ -181,10 +180,6 @@ size_t MemoryManager::numberEdgesInMemory(vertex_t* d_neighbours_count, vertex_t
   return 0;
 }
 
-template size_t MemoryManager::numberEdgesInMemory<VertexData>(vertex_t* d_neighbours_count, vertex_t vertex_offset, vertex_t number_vertices, bool return_count);
-template size_t MemoryManager::numberEdgesInMemory<VertexDataWeight>(vertex_t* d_neighbours_count, vertex_t vertex_offset, vertex_t number_vertices, bool return_count);
-template size_t MemoryManager::numberEdgesInMemory<VertexDataSemantic>(vertex_t* d_neighbours_count, vertex_t vertex_offset, vertex_t number_vertices, bool return_count);
-
 //------------------------------------------------------------------------------
 //
 template <typename VertexDataType>
@@ -193,12 +188,8 @@ void MemoryManager::numberPagesInMemory(vertex_t* d_page_count)
   int block_size = 256;
   int grid_size = (next_free_vertex_index / block_size) + 1;
 
-  d_reportPages<VertexDataType> << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_data, d_page_count);
+  faimGraphMemoryManager::d_reportPages<VertexDataType> << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_data, d_page_count);
 }
-
-template void MemoryManager::numberPagesInMemory<VertexData>(vertex_t* d_page_count);
-template void MemoryManager::numberPagesInMemory<VertexDataWeight>(vertex_t* d_page_count);
-template void MemoryManager::numberPagesInMemory<VertexDataSemantic>(vertex_t* d_page_count);
 
 //------------------------------------------------------------------------------
 //
@@ -208,7 +199,7 @@ size_t MemoryManager::numberPagesInMemory(vertex_t* d_page_count, vertex_t* d_ac
   int block_size = 256;
   int grid_size = (next_free_vertex_index / block_size) + 1;
 
-  d_reportPages<VertexDataType> << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_data, d_page_count);
+  faimGraphMemoryManager::d_reportPages<VertexDataType> << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_data, d_page_count);
 
   vertex_t  accumulated_page_count;
 	thrust::device_ptr<vertex_t> th_page_count(d_page_count);
@@ -236,10 +227,6 @@ size_t MemoryManager::numberPagesInMemory(vertex_t* d_page_count, vertex_t* d_ac
   return accumulated_page_count;
 }
 
-template size_t MemoryManager::numberPagesInMemory<VertexData>(vertex_t* d_page_count, vertex_t* d_accumulated_page_count);
-template size_t MemoryManager::numberPagesInMemory<VertexDataWeight>(vertex_t* d_page_count, vertex_t* d_accumulated_page_count);
-template size_t MemoryManager::numberPagesInMemory<VertexDataSemantic>(vertex_t* d_page_count, vertex_t* d_accumulated_page_count);
-
 //------------------------------------------------------------------------------
 //
 void MemoryManager::workBalanceCalculation(vertex_t* d_accumulated_page_count, vertex_t page_count, vertex_t* d_vertex_indices, vertex_t* d_page_per_vertex_indices)
@@ -247,6 +234,6 @@ void MemoryManager::workBalanceCalculation(vertex_t* d_accumulated_page_count, v
   int block_size = 256;
   int grid_size = (next_free_vertex_index / block_size) + 1;
 
-  d_workBalanceCalculation << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_accumulated_page_count, page_count, d_vertex_indices, d_page_per_vertex_indices);
+  faimGraphMemoryManager::d_workBalanceCalculation << < grid_size, block_size >> > ((MemoryManager*)d_memory, d_accumulated_page_count, page_count, d_vertex_indices, d_page_per_vertex_indices);
   return;
 }

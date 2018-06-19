@@ -138,7 +138,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
   bool gpuVerification = true;
   bool writeToFile = false;
   bool duplicate_check = true;
-  unsigned int range = 1000;
+  unsigned int range = 0;
   unsigned int offset = 0;
 
   int vertex_batch_size = 100;
@@ -155,7 +155,7 @@ void testrunImplementation(const std::shared_ptr<Config>& config, const std::uni
       float time_elapsed_init = 0;
       float time_elapsed_edgeinsertion = 0;
       float time_elapsed_edgedeletion = 0; 
-      int warmup_rounds = 2;
+      int warmup_rounds = 0;
 
       //Setup graph parser and read in file
       std::unique_ptr<GraphParser> parser(new GraphParser(graph));

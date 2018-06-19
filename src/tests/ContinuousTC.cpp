@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 {
   if (argc != 2)
   {
-    std::cout << "Usage: ./mainfaimGraph <configuration-file>" << std::endl;
+    std::cout << "Usage: ./continuousTC <configuration-file>" << std::endl;
     return RET_ERROR;
   }
   std::cout << "########## faimGraph Demo ##########" << std::endl;
@@ -195,7 +195,7 @@ void testrunImplementationUniform(const std::shared_ptr<Config>& config, const s
 
         start_clock(ce_start, ce_stop);
 
-        std::unique_ptr<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<aimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
+        std::unique_ptr<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>> aimGraph(std::make_unique<faimGraph<VertexDataType, VertexUpdateType, EdgeDataType, UpdateDataType>>(config, parser));
         aimGraph->initializeMemory(parser);
 
         time_diff = end_clock(ce_start, ce_stop);

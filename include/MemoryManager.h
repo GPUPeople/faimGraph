@@ -15,9 +15,7 @@
 #include "Utility.h"
 #include "ConfigurationParser.h"
 #include "Queue.h"
-
-// Forward declaration
-class GraphParser;
+#include "GraphParser.h"
 
 enum class GraphDirectionality
 {
@@ -375,19 +373,109 @@ private:
 class CSRData
 {
   public:
-    explicit CSRData(const std::unique_ptr<GraphParser>& graph_parser,
-                     std::unique_ptr<MemoryManager>& memory_manager,
-      unsigned int vertex_offset = 0);
-	 explicit CSRData(vertex_t* offset, vertex_t* adjacency,
-		 std::unique_ptr<MemoryManager>& memory_manager,
-		 unsigned int number_vertices, unsigned int number_edges);
-    explicit CSRData(std::unique_ptr<MemoryManager>& memory_manager, 
-      unsigned int number_rows, 
-      unsigned int vertex_offset = 0);
+    explicit CSRData(const std::unique_ptr<GraphParser>& graph_parser, std::unique_ptr<MemoryManager>& memory_manager,
+		  bool externalAllocation = true, unsigned int vertex_offset = 0):
+        externalAllocation{ externalAllocation },
+        scoped_mem_access_counter{memory_manager.get(), sizeof(vertex_t) * (
+                                                        graph_parser->getAdjacency().size() +
+                                                        graph_parser->getOffset().size() +
+                                                        (4 * graph_parser->getNumberOfVertices()))}
+  {
+    if (externalAllocation)
+    {
+      size_t allocation_size = sizeof(vertex_t) * (graph_parser->getOffset().size() +
+        graph_parser->getAdjacency().size() +
+        graph_parser->getNumberOfVertices() +
+        (graph_parser->getNumberOfVertices() + 1));
+      if (graph_parser->isGraphMatrix())
+        allocation_size += sizeof(matrix_t) * graph_parser->getMatrixValues().size();
+      HANDLE_ERROR(cudaMalloc(&allocation, allocation_size));
+      d_offset = reinterpret_cast<vertex_t*>(allocation);
+      d_adjacency = d_offset + graph_parser->getOffset().size();
+      d_neighbours = d_adjacency + graph_parser->getAdjacency().size();
+      d_block_requirements = d_neighbours + graph_parser->getNumberOfVertices();
+      if (graph_parser->isGraphMatrix())
+      {
+        d_matrix_values = reinterpret_cast<matrix_t*>(d_block_requirements + (graph_parser->getNumberOfVertices() + 1));
+      }
+    }
+    else
+    {
+      TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), vertex_offset + graph_parser->getNumberOfVertices(), sizeof(VertexData));
+
+      d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getOffset().size());
+      d_adjacency = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getAdjacency().size());
+      if (graph_parser->isGraphMatrix())
+      {
+        d_matrix_values = temp_memory_dispenser.getTemporaryMemory<matrix_t>(graph_parser->getMatrixValues().size());
+      }
+
+      d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getNumberOfVertices());
+      d_block_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(graph_parser->getNumberOfVertices() + 1);
+    }
+
+    // Copy adjacency/offset list to device
+    HANDLE_ERROR(cudaMemcpy(d_adjacency, graph_parser->getAdjacency().data(),
+                            sizeof(vertex_t) * graph_parser->getAdjacency().size(),
+                            cudaMemcpyHostToDevice));
+    HANDLE_ERROR(cudaMemcpy(d_offset, graph_parser->getOffset().data(),
+                            sizeof(vertex_t) * graph_parser->getOffset().size(),
+                            cudaMemcpyHostToDevice));
+    if (graph_parser->isGraphMatrix())
+    {
+      HANDLE_ERROR(cudaMemcpy(d_matrix_values, graph_parser->getMatrixValues().data(),
+                              sizeof(matrix_t) * graph_parser->getMatrixValues().size(),
+                              cudaMemcpyHostToDevice));
+    }
+  }
+
+	 explicit CSRData(vertex_t* offset, vertex_t* adjacency, std::unique_ptr<MemoryManager>& memory_manager,
+		 unsigned int number_vertices, unsigned int number_edges, bool externalAllocation = true):
+      externalAllocation{ externalAllocation },
+      scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (
+        number_edges +
+        number_vertices + 1 +
+        (4 * number_vertices)) }
+  {
+    if (externalAllocation)
+    {
+      allocation = offset;
+      d_offset = offset;
+      d_adjacency = adjacency;
+      d_neighbours = d_adjacency + number_edges;
+      d_block_requirements = d_neighbours + number_vertices;
+    }
+    else
+    {
+      TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), number_vertices, sizeof(VertexData));
+
+      d_offset = offset;
+      d_adjacency = adjacency;
+      d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
+      d_block_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
+    }
+  }
+
+    explicit CSRData(std::unique_ptr<MemoryManager>& memory_manager, unsigned int number_rows, unsigned int vertex_offset = 0) :
+      externalAllocation{ externalAllocation },
+      scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (number_rows + 1 + (4 * number_rows)) }
+    {
+      TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), vertex_offset + number_rows, sizeof(VertexData));
+      d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows + 1);
+      d_neighbours = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows);
+      d_block_requirements = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_rows);
+
+      HANDLE_ERROR(cudaMemset(d_offset,
+                              0,
+                              sizeof(vertex_t) * (number_rows + 1)));
+    }
+
     ~CSRData()
     {
       // With more sophisticated memory management,
       // reset stack pointer here!
+		 if (externalAllocation)
+			 HANDLE_ERROR(cudaFree(allocation));
     }
 
   // CSR data structure holding the initial graph
@@ -395,9 +483,9 @@ class CSRData
     vertex_t* d_offset;
     matrix_t* d_matrix_values{nullptr};
     vertex_t* d_neighbours;
-    vertex_t* d_capacity;
     vertex_t* d_block_requirements;
-    vertex_t* d_mem_requirements;
+	 bool externalAllocation;
+	 void* allocation{nullptr};
 
     // Used to deal with temporary memory management count
     ScopedMemoryAccessHelper scoped_mem_access_counter;
@@ -433,14 +521,62 @@ public:
 class aimGraphCSR
 {
   public:
-    aimGraphCSR(std::unique_ptr<MemoryManager>& memory_manager);
-    aimGraphCSR(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices);
+    aimGraphCSR(std::unique_ptr<MemoryManager>& memory_manager, bool externalAllocation = true):
+      number_vertices{memory_manager->next_free_vertex_index},
+      externalAllocation{ externalAllocation },
+      scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (2 * memory_manager->next_free_vertex_index) }
+    {
+      if (externalAllocation)
+      {
+        HANDLE_ERROR(cudaMalloc(reinterpret_cast<void**>(&d_offset), sizeof(vertex_t) * (memory_manager->next_free_vertex_index+1) * 2));
+        d_mem_requirement = d_offset + memory_manager->next_free_vertex_index + 1;
+      }
+      else
+      {
+        TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), memory_manager->next_free_vertex_index, sizeof(VertexData));
+        d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(memory_manager->next_free_vertex_index);
+        d_mem_requirement = temp_memory_dispenser.getTemporaryMemory<vertex_t>(memory_manager->next_free_vertex_index);
+        d_adjacency = temp_memory_dispenser.getTemporaryMemory<vertex_t>(0);
+      }
+      
+      h_offset = (vertex_t*) malloc(sizeof(vertex_t) * (memory_manager->next_free_vertex_index + 1));
+    }
+
+    aimGraphCSR(std::unique_ptr<MemoryManager>& memory_manager, vertex_t vertex_offset, vertex_t number_vertices, bool externalAllocation = true) :
+      number_vertices{ number_vertices },
+      externalAllocation{ externalAllocation },
+      scoped_mem_access_counter{ memory_manager.get(), sizeof(vertex_t) * (2 * number_vertices) }
+    {
+      if (externalAllocation)
+      {
+        HANDLE_ERROR(cudaMalloc(reinterpret_cast<void**>(&d_offset), sizeof(vertex_t) * (number_vertices+1) * 2));
+        d_mem_requirement = d_offset + memory_manager->next_free_vertex_index;
+      }
+      else
+      {
+        TemporaryMemoryAccessHeap temp_memory_dispenser(memory_manager.get(), vertex_offset + number_vertices, sizeof(VertexData));
+
+        d_offset = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
+        d_mem_requirement = temp_memory_dispenser.getTemporaryMemory<vertex_t>(number_vertices);
+        d_adjacency = temp_memory_dispenser.getTemporaryMemory<vertex_t>(0);
+        d_matrix_values = temp_memory_dispenser.getTemporaryMemory<matrix_t>(0);
+      }
+
+      h_offset = (vertex_t*)malloc(sizeof(vertex_t) * (memory_manager->next_free_vertex_index + 1));
+    }
+
     ~aimGraphCSR()
     {
       free(h_adjacency);
       free(h_offset);
       if(h_matrix_values != nullptr)
         free(h_matrix_values);
+
+      if (externalAllocation)
+      {
+        HANDLE_ERROR(cudaFree(d_adjacency));
+        HANDLE_ERROR(cudaFree(d_offset));
+      }
     }
 
   // CSR data structure holding the GPU graph
@@ -455,6 +591,7 @@ class aimGraphCSR
 
     index_t number_vertices;
     index_t number_edges;
+    bool externalAllocation;
 
     // Used to deal with temporary memory management count
     ScopedMemoryAccessHelper scoped_mem_access_counter;

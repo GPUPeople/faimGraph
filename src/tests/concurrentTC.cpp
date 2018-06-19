@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 {
 	if(argc != 2)
 	{
-		std::cout << "Usage: ./mainfaimGraph <configuration-file>" << std::endl;
+		std::cout << "Usage: ./concurrentTC <configuration-file>" << std::endl;
 		return RET_ERROR;
 	}
   std::cout << "########## faimGraph Demo ##########" << std::endl;
