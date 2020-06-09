@@ -1,0 +1,15 @@
+<aimGraph>
+	<global>
+		<deviceID>0</deviceID>
+		<devicememsize>8.00</devicememsize>
+	</global>
+	<testrun>
+		<configuration>
+			<rounds>50</rounds>
+			<pagesize>64</pagesize>
+		</configuration>
+		<graphs>
+			<filename>../../graphs/email.mtx</filename>
+		</graphs>
+	</testrun>
+</aimGraph>

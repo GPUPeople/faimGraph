@@ -509,8 +509,7 @@ std::shared_ptr<Config> ConfigurationParser::parseConfiguration()
     }
     else
     {
-      std::cout << "No batchsizes were specified, abort!" << std::endl;
-      exit(0);
+      std::cout << "No batchsizes were specified!" << std::endl;
     }
 
     // Put each individual testrun into the vector
