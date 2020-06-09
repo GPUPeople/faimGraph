@@ -116,13 +116,13 @@ void MemoryManager::estimateStorageRequirements(const std::shared_ptr<Config>& c
 		additional_space_requirements; 
 	total_memory = size_estimation;
 
-	printf("Size Estimation : %lu MB  ---  Pages: %lu MB | Vertices: %lu MB | Helper: %lu MB | AdditionalSpace: %lu MB\n", 
-		size_estimation / (1024 * 1024),
-		static_cast<uint64_t>(page_estimation_per_vertex * page_size) / (1024 * 1024),
-		static_cast<uint64_t>(sizeof(VertexData) * number_vertices) / (1024*1024),
-		(static_cast<uint64_t>((config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2)) +
-		static_cast<uint64_t>(config->testruns_.at(config->testrun_index_)->params->stacksize_)) / (1024*1024),
-		additional_space_requirements / (1024*1024));
+	// printf("Size Estimation : %lu MB  ---  Pages: %lu MB | Vertices: %lu MB | Helper: %lu MB | AdditionalSpace: %lu MB\n", 
+	// 	size_estimation / (1024 * 1024),
+	// 	static_cast<uint64_t>(page_estimation_per_vertex * page_size) / (1024 * 1024),
+	// 	static_cast<uint64_t>(sizeof(VertexData) * number_vertices) / (1024*1024),
+	// 	(static_cast<uint64_t>((config->testruns_.at(config->testrun_index_)->params->queuesize_ * sizeof(index_t) * 2)) +
+	// 	static_cast<uint64_t>(config->testruns_.at(config->testrun_index_)->params->stacksize_)) / (1024*1024),
+	// 	additional_space_requirements / (1024*1024));
 	
 #endif
 

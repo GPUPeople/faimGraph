@@ -9,7 +9,7 @@
 			<graphmode>simple</graphmode>
 			<updatevariant>standard</updatevariant>
 			<rounds>10</rounds>
-			<updaterounds>10</updaterounds>
+			<updaterounds>0</updaterounds>
 			<edgeblocksize>64</edgeblocksize>
 			<initlaunchblocksize>32</initlaunchblocksize>
 			<insertlaunchblocksize>256</insertlaunchblocksize>
@@ -23,13 +23,23 @@
 			<directionality>undirected</directionality>
 		</configuration>
 		<graphs>
-		  <filename>../graphs/email.graph</filename>
-		  <filename>../graphs/luxembourg.osm.graph</filename>
-		  <filename>../graphs/ldoor.graph</filename>
+		  <filename>../../graphs/luxembourg_osm.mtx</filename>
+		  <filename>../../graphs/coAuthorsCiteseer.mtx</filename>
+		  <filename>../../graphs/coAuthorsDBLP.mtx</filename>
+		  <filename>../../graphs/ldoor.mtx</filename>
+		  <filename>../../graphs/audikw_1.mtx</filename>
+		  <filename>../../graphs/delaunay_n20.mtx</filename>
+		  <filename>../../graphs/rgg_n_2_20_s0.mtx</filename>
+		  <filename>../../graphs/hugetric-00000.mtx</filename>
+		  <filename>../../graphs/delaunay_n23.mtx</filename>
+		  <filename>../../graphs/germany_osm.mtx</filename>
+		  <filename>../../graphs/nlpkkt120.mtx</filename>
+		  <filename>../../graphs/nlpkkt200.mtx</filename>
+		  <filename>../../graphs/nlpkkt240.mtx</filename>
+		  <filename>../../graphs/europe_osm.mtx</filename>
 		</graphs>
 		<batches>
 			<batchsize>100000</batchsize>
-			<batchsize>1000000</batchsize>
 		</batches>
 	</testrun>
 </aimGraph>

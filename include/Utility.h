@@ -10,6 +10,7 @@
 
 #include "Definitions.h"
 #include "MemoryLayout.h"
+#include <stdio.h>
 
 static void HandleError( cudaError_t err,
                          const char *file,

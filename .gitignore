@@ -41,3 +41,4 @@ graphs/*
 tests/PerformanceData/*
 tests/Verification/*
 documentation/
+include/cub/

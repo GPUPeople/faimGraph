@@ -8,6 +8,9 @@
 
 #pragma once
 
+#include <string>
+#include <memory>
+
 #include "Utility.h"
 
 class Testruns;
