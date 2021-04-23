@@ -2,7 +2,7 @@
 #include "MemoryManager.h"
 #include "BFS.h"
 
-#include "../include/cub/cub/cub.cuh"
+#include "cub/cub.cuh"
 
 #ifdef __INTELLISENSE__
 unsigned int atomicCAS(unsigned int* address, unsigned int compare, unsigned int val);
